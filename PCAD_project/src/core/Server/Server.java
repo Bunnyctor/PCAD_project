@@ -69,30 +69,46 @@ public class Server implements IServer {
   
   
   
+  
 @Override
-public void publish(TopicMessage msg) throws RemoteException {
-	if (!topics.containsKey(msg.getTopic()))
-  		topics.put(msg.getTopic(), new LinkedList<IClient>());
-  	for(IClient cl : topics.get(msg.getTopic()))				//se non mi iscrivo al topic, non ricevo messaggio
-  		cl.sendMessage(msg);
+public void createTopic(String clientId, String topic) throws RemoteException {
+		if (!topics.containsKey(topic)) {
+	  		topics.put(topic, new LinkedList<IClient>());
+	  		subscribe(clientId,topic);
+		}
+		else {
+			try {
+				IClient cd = (IClient)r.lookup(clientId);
+				cd.sendMessage("Topic with name "+topic+" already exists");
+			} catch (NotBoundException e) {
+			}
+		}
+}
+  
+@Override
+public void publish(TopicMessage message) throws RemoteException {
+	if (!topics.containsKey(message.getTopic()))
+  		topics.put(message.getTopic(), new LinkedList<IClient>());
+  	for(IClient cl : topics.get(message.getTopic()))				//se non mi iscrivo al topic, non ricevo messaggio
+  		cl.sendMessage(message);
 }
 
 
 
 @Override
-public void subscribe(String topic, String name) throws RemoteException {
+public void subscribe(String clientId, String topic) throws RemoteException {
 	try {
 		List<IClient> clients = topics.get(topic);
 		if(clients==null) {
-			//System.out.println("\t"+connectedClients.get("30"));
-			//connectedClients.get("30").sendMessage(new MessageT(topic,"Unexisting topic","Server"));
-		  	//for(IClient cl : topics.get(topic))
-		  		//cl.sendMessage(new MessageT(topic,"Unexisting topic","Server"));
-		    System.out.println("Unexisting topic");
+			try {
+				IClient cd = (IClient)r.lookup(clientId);
+				cd.sendMessage("Topic with name "+topic+" does not exists");
+			} catch (NotBoundException e) {
+			}
 		}
 		else
 			synchronized(clients) {
-				IClient cd = (IClient)r.lookup(name);
+				IClient cd = (IClient)r.lookup(clientId);
 				if (clients != null && !clients.contains(cd))
 					clients.add(cd);
 			}
@@ -103,9 +119,9 @@ public void subscribe(String topic, String name) throws RemoteException {
 
 
 @Override
-public void unsubscribe(String topic, String name) throws RemoteException {
+public void unsubscribe(String clientId, String topic) throws RemoteException {
 	try {
-		IClient cd = (IClient)r.lookup(name);
+		IClient cd = (IClient)r.lookup(clientId);
 		List<IClient> clients = topics.get(topic);
 		synchronized(clients) {
 			if (clients != null && clients.contains(cd))
@@ -130,8 +146,8 @@ public Set<String> getTopicList() throws RemoteException {
 }
 
 @Override
-public void getTopicList(String client) throws RemoteException {
-	connectedClients.get(client).sendTopicList(topics.keySet());
+public void getTopicList(String clientId) throws RemoteException {
+	connectedClients.get(clientId).sendTopicList(topics.keySet());
 }
 
 public void sendMessage(TopicMessage msg) throws RemoteException {
@@ -139,18 +155,23 @@ public void sendMessage(TopicMessage msg) throws RemoteException {
 
 
 
-public void printClientList() throws RemoteException {	//invia a tutti gli iscritti -> deve inviare solo al richiedente
-
+public void printClientList(String clientId) throws RemoteException {
+	IClient cd;
+	try {
+		cd = (IClient)r.lookup(clientId);
+	} catch (NotBoundException e) {
+		return;
+	}
 	for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet()) {
-		for(IClient subscriber : topic.getValue()) {
-			subscriber.sendMessage("\nTopic: "+topic.getKey());
+		cd.sendMessage("\nTopic: "+topic.getKey());
+		for(IClient subscriber : topic.getValue())
 			for (AbstractMap.Entry<String,IClient> entry : connectedClients.entrySet())
 				if (entry.getValue().equals(subscriber))
-					subscriber.sendMessage(entry.getKey()+'\n');
-		}
+					cd.sendMessage(entry.getKey());
 	}
-	System.out.println("\n");
+	System.out.println('\n');
 }
+
 
 
   
