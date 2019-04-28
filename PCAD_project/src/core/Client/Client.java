@@ -47,7 +47,7 @@ public class Client implements IClient {
 			case("2"):
 				System.out.println("Create topic");
 				topic=sc.nextLine();
-				server.publish(new TopicMessage(topic,"",clientId));
+				server.createTopic(clientId,topic);
 				break;
 			case("3"):
 				System.out.println("Insert topic");
@@ -74,7 +74,7 @@ public class Client implements IClient {
 				System.out.println(messages);
 				break;
 			case("8"):
-				server.printClientList();
+				server.printClientList(clientId);
 				break;
 			default:
 				break;
