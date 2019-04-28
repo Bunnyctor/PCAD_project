@@ -11,9 +11,7 @@ local.properties
 .recommenders
 
 #ADDED BY DAVIDE
-.classpath
 .DS_Store
-.classpath
 *.class
 
 # External tool builders
