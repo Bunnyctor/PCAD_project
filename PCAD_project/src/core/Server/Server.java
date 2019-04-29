@@ -26,10 +26,11 @@ public class Server implements IServer {
 	  System.out.println("Server creato");
   }
   
+  
   public synchronized void request(String clientId, IClient stub) throws RemoteException {
 	  System.out.println("Request dal client "+clientId);
 	  try {
-		r.bind(clientId, stub);
+		r.bind(clientId,stub);
 	} catch (AlreadyBoundException e) {
 	}
 	  try {
@@ -37,36 +38,8 @@ public class Server implements IServer {
 		System.out.println(connectedClients.toString());
 	} catch (NotBoundException e) {
 	}
-	  stub.notifyClient();
+	  stub.notifyClient("hand-shake ok");
   }
-  
-  public static void main(String args[]) {
-		try {
-			System.setProperty("java.security.policy","file:./sec.policy");
-			System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
-			if(System.getSecurityManager() == null) System.setSecurityManager(new SecurityManager());
-			System.setProperty("java.rmi.server.hostname","localhost");
-			try {
-				r = LocateRegistry.createRegistry(8000);
-				System.out.println("Registro creato");
-			} catch (RemoteException e) {
-				if (e.getMessage().contains("Port already in use"))
-		            System.out.println("Port already in use. Trying to connect to it...");
-				r = LocateRegistry.getRegistry(8000);
-				System.out.println("Registro trovato");
-			}
-			Server server = (Server)new Server();
-			IServer stubRequest = (IServer) UnicastRemoteObject.exportObject(server,0);
-			r.rebind("REG", stubRequest);
-		    System.out.println("It works!\n");
-		    
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	 }
-  
-  
   
   
 @Override
@@ -75,94 +48,110 @@ public void createTopic(String clientId, String topic) throws RemoteException {
 	  		topics.put(topic, new LinkedList<IClient>());
 	  		subscribe(clientId,topic);
 		}
-		else {
-			try {
-				IClient cd = (IClient)r.lookup(clientId);
-				cd.sendMessage("Topic with name "+topic+" already exists");
-			} catch (NotBoundException e) {
-			}
-		}
-}
-  
-@Override
-public void publish(TopicMessage message) throws RemoteException {
-	if (!topics.containsKey(message.getTopic()))
-  		topics.put(message.getTopic(), new LinkedList<IClient>());
-  	for(IClient cl : topics.get(message.getTopic()))				//se non mi iscrivo al topic, non ricevo messaggio
-  		cl.sendMessage(message);
+		else
+			connectedClients.get(clientId).notifyClient("Topic with name "+topic+" already exists");
 }
 
 
 
 @Override
 public void subscribe(String clientId, String topic) throws RemoteException {
+	List<IClient> clients = topics.get(topic);
+	IClient cd = connectedClients.get(clientId);
 	try {
-		List<IClient> clients = topics.get(topic);
-		IClient cd = (IClient)r.lookup(clientId);	
 		synchronized(clients) {
-			if(clients==null)
-				cd.sendMessage("Topic with name "+topic+" does not exists");
-			else if (!clients.contains(cd))
-				clients.add(cd);
+			if (!clients.contains(cd))	clients.add(cd);
+			else	cd.notifyClient("You already subscribed the topic "+topic+'\n');
 		}
-	} catch (NotBoundException e) {
 	}
-	
+	catch(NullPointerException e) {
+		cd.notifyClient("Topic with name "+topic+" does not exists");
+	}
 }
 
 
 @Override
 public void unsubscribe(String clientId, String topic) throws RemoteException {
+	List<IClient> clients = topics.get(topic);
+	IClient cd = connectedClients.get(clientId);
 	try {
-		IClient cd = (IClient)r.lookup(clientId);
-		List<IClient> clients = topics.get(topic);
 		synchronized(clients) {
-			if (clients != null && clients.contains(cd))
-				clients.remove(cd);
+			if (clients.contains(cd))	clients.remove(cd);
+			else	cd.notifyClient("You are not subscribed to the topic "+topic+'\n');
 		}
-	} catch (NotBoundException e) {
+	}
+	catch(NullPointerException e) {
+		cd.notifyClient("Topic with name "+topic+" does not exists");
 	}
 }
 
-/*
-public void notifyClient() throws RemoteException {
-	System.out.println("hand-shake ok!");
-}
-
-public void sendTopicList(Set<String> topics) throws RemoteException {
-	
-}*/
 
 @Override
-public Set<String> getTopicList() throws RemoteException {
-	return topics.keySet();
+public void publish(String clientId, TopicMessage message) throws RemoteException {
+	if (!topics.containsKey(message.getTopic()))
+  		topics.put(message.getTopic(), new LinkedList<IClient>());
+  	for(IClient cl : topics.get(message.getTopic()))
+  		cl.sendMessage(message);
 }
+
 
 @Override
 public void getTopicList(String clientId) throws RemoteException {
 	connectedClients.get(clientId).sendTopicList(topics.keySet());
 }
 
-public void sendMessage(TopicMessage msg) throws RemoteException {
+
+@Override
+public Set<String> getTopicList() throws RemoteException {
+	return topics.keySet();
+}
+
+
+@Override
+public void printClientList(String clientId) throws RemoteException {
+	IClient cd = connectedClients.get(clientId);
+	for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet()) {
+		cd.notifyClient("\nTopic: "+topic.getKey());
+		for(IClient subscriber : topic.getValue())
+			for (AbstractMap.Entry<String,IClient> entry : connectedClients.entrySet())
+				if (entry.getValue().equals(subscriber))
+					cd.notifyClient(entry.getKey());
+	}
+	System.out.println('\n');
 }
 
 
 
-public void printClientList(String clientId) throws RemoteException {
-	IClient cd;
+
+
+
+
+
+
+
+
+public static void main(String args[]) {
 	try {
-		cd = (IClient)r.lookup(clientId);
-	} catch (NotBoundException e) {
-		return;
+		System.setProperty("java.security.policy","file:./sec.policy");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
+		System.setProperty("java.rmi.server.hostname","localhost");
+		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
+		try {
+			r = LocateRegistry.createRegistry(8000);
+			System.out.println("Registro creato");
+		} catch (RemoteException e) {
+			if (e.getMessage().contains("Port already in use"))
+	            System.out.println("Port already in use. Trying to connect to it...");
+			r = LocateRegistry.getRegistry(8000);
+			System.out.println("Registro trovato");
+		}
+		Server server = (Server)new Server();
+		IServer stubRequest = (IServer) UnicastRemoteObject.exportObject(server,0);
+		r.rebind("REG", stubRequest);
+	    System.out.println("It works!\n");    
 	}
-	for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet()) {
-		cd.sendMessage("\nTopic: "+topic.getKey());
-		for(IClient subscriber : topic.getValue())
-			for (AbstractMap.Entry<String,IClient> entry : connectedClients.entrySet())
-				if (entry.getValue().equals(subscriber))
-					cd.sendMessage(entry.getKey());
+	catch (Exception e) {
 	}
-	System.out.println('\n');
 }
 
 
