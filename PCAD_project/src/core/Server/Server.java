@@ -89,9 +89,10 @@ public void unsubscribe(String clientId, String topic) throws RemoteException {
 @Override
 public void publish(String clientId, TopicMessage message) throws RemoteException {
 	if (!topics.containsKey(message.getTopic()))
-  		topics.put(message.getTopic(), new LinkedList<IClient>());
-  	for(IClient cl : topics.get(message.getTopic()))
-  		cl.sendMessage(message);
+		connectedClients.get(clientId).notifyClient("Topic with name "+message.getTopic()+" does not exist");
+	else
+		for(IClient cl : topics.get(message.getTopic()))
+			cl.sendMessage(message);
 }
 
 
@@ -107,8 +108,8 @@ public Set<String> getTopicList() throws RemoteException {
 }
 
 
-@Override
-public void printClientList(String clientId) throws RemoteException {
+
+public void seeClientsOfAllTopics_oldVersion(String clientId) throws RemoteException {
 	IClient cd = connectedClients.get(clientId);
 	for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet()) {
 		cd.notifyClient("\nTopic: "+topic.getKey());
@@ -122,10 +123,23 @@ public void printClientList(String clientId) throws RemoteException {
 
 
 
+@Override
+public void seeClientsOfOneTopic(String clientId, String topic) throws RemoteException {
+	IClient cd = connectedClients.get(clientId);
+	cd.notifyClient("\nTopic: "+topic);
+	for(IClient subscriber : topics.get(topic))
+		for (AbstractMap.Entry<String,IClient> entry : connectedClients.entrySet())
+			if (entry.getValue().equals(subscriber))
+				cd.notifyClient(entry.getKey());
+	System.out.println('\n');
+}
 
 
-
-
+@Override
+public void seeClientsOfAllTopics(String clientId) throws RemoteException {
+	for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet())
+		seeClientsOfOneTopic(clientId,topic.getKey());
+}
 
 
 

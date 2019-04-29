@@ -17,5 +17,6 @@ public interface IServer extends Remote,Serializable {
 	public void publish(String clientId, TopicMessage message)throws RemoteException;
 	public void getTopicList(String client)throws RemoteException;
 	public Set<String> getTopicList()throws RemoteException;
-	public void printClientList(String clientId) throws RemoteException;
+	public void seeClientsOfAllTopics(String clientId) throws RemoteException;
+	public void seeClientsOfOneTopic(String clientId, String topic) throws RemoteException;
 }

@@ -39,7 +39,6 @@ public class Client implements IClient {
 			topic=sc.nextLine();
 			switch(topic) {
 			case("1"):
-				//server.getTopicList();
 				server.getTopicList(clientId);
 				break;
 			case("2"):
@@ -60,19 +59,23 @@ public class Client implements IClient {
 				server.subscribe(clientId,topic);
 				break;
 			case("5"):
-				System.out.println("Insert Topic to unsubscribe");
+				System.out.println("Insert topic to unsubscribe");
 				topic=sc.nextLine();
 				server.unsubscribe(clientId,topic);
 				break;
 			case("6"):
-				System.out.println(messages);
+				System.out.println("Not yet implemented");
 				break;
 			case("7"):
-				topic=sc.nextLine();
-				System.out.println(messages);
+				System.out.println("Not yet implemented");
 				break;
 			case("8"):
-				server.printClientList(clientId);
+				System.out.println("Insert topic");
+				topic=sc.nextLine();
+				server.seeClientsOfOneTopic(clientId,topic);
+				break;
+			case("9"):
+				server.seeClientsOfAllTopics(clientId);
 				break;
 			case("quit"):
 				System.out.println("\nQuitting..");
@@ -96,9 +99,10 @@ public class Client implements IClient {
 		System.out.println("3 \tPublish post into a topic");
 		System.out.println("4 \tSubscribe a topic");
 		System.out.println("5 \tUnsubscribe from a topic");
-		System.out.println("6 \tSee all posts");	
-		System.out.println("7 \tSee posts from a topic");
-		System.out.println("8 \tSee subscribers of all topics");
+		System.out.println("6 \tSee all posts");
+		System.out.println("7 \tSee all posts of a topic");
+		System.out.println("8 \tSee subscribers of a topic");
+		System.out.println("9 \tSee subscribers of all topics");
 	}
 		
 	public void notifyClient(String message) throws RemoteException {
