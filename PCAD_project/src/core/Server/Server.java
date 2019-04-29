@@ -18,7 +18,7 @@ import core.Shared.TopicMessage;
 
 public class Server implements IServer {
   private static final long serialVersionUID = 1L;
-  private static Registry r;
+  private static Registry r = null;
   private AbstractMap<String,IClient> connectedClients = new ConcurrentHashMap<>();
   private AbstractMap<String,List<IClient>> topics = new ConcurrentHashMap<>();
   
@@ -46,7 +46,6 @@ public class Server implements IServer {
 			System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
 			if(System.getSecurityManager() == null) System.setSecurityManager(new SecurityManager());
 			System.setProperty("java.rmi.server.hostname","localhost");
-			r = null;
 			try {
 				r = LocateRegistry.createRegistry(8000);
 				System.out.println("Registro creato");
@@ -99,19 +98,13 @@ public void publish(TopicMessage message) throws RemoteException {
 public void subscribe(String clientId, String topic) throws RemoteException {
 	try {
 		List<IClient> clients = topics.get(topic);
-		if(clients==null) {
-			try {
-				IClient cd = (IClient)r.lookup(clientId);
+		IClient cd = (IClient)r.lookup(clientId);	
+		synchronized(clients) {
+			if(clients==null)
 				cd.sendMessage("Topic with name "+topic+" does not exists");
-			} catch (NotBoundException e) {
-			}
+			else if (!clients.contains(cd))
+				clients.add(cd);
 		}
-		else
-			synchronized(clients) {
-				IClient cd = (IClient)r.lookup(clientId);
-				if (clients != null && !clients.contains(cd))
-					clients.add(cd);
-			}
 	} catch (NotBoundException e) {
 	}
 	
