@@ -25,7 +25,7 @@ public class Client implements IClient {
 		try {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
-		if (System.getSecurityManager() == null) System.setSecurityManager(new SecurityManager());
+		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
 		//Registry r = LocateRegistry.getRegistry("localhost",8000);
 		Registry r = LocateRegistry.getRegistry(8000);
@@ -33,8 +33,6 @@ public class Client implements IClient {
 		stub = (IClient)UnicastRemoteObject.exportObject(this,0);
 		server.request(clientId,stub);
 		sc=new Scanner(System.in);
-		//messages=new LinkedList<TopicMessage>();
-		//topicMess=new ConcurrentHashMap<>();
 
 		while(true) {
 			menu();
@@ -54,17 +52,17 @@ public class Client implements IClient {
 				topic=sc.nextLine();
 				System.out.println("Insert post");
 				message=sc.nextLine();
-				server.publish(new TopicMessage(topic,message,clientId));
+				server.publish(clientId,new TopicMessage(topic,message,clientId));
 				break;
 			case("4"):
 				System.out.println("Insert topic to subscribe");
 				topic=sc.nextLine();
-				server.subscribe(topic,clientId);
+				server.subscribe(clientId,topic);
 				break;
 			case("5"):
 				System.out.println("Insert Topic to unsubscribe");
 				topic=sc.nextLine();
-				server.unsubscribe(topic,clientId);
+				server.unsubscribe(clientId,topic);
 				break;
 			case("6"):
 				System.out.println(messages);
@@ -76,16 +74,16 @@ public class Client implements IClient {
 			case("8"):
 				server.printClientList(clientId);
 				break;
+			case("quit"):
+				System.out.println("\nQuitting..");
+				return;
 			default:
 				break;
 			}
 			System.out.println("Press enter to continue");
 			sc.nextLine();
 		}
-		
-		
 		} catch (RemoteException | NotBoundException e) {
-			e.printStackTrace();
 		}
 	}
 	
@@ -103,16 +101,9 @@ public class Client implements IClient {
 		System.out.println("8 \tSee subscribers of all topics");
 	}
 		
-	public void notifyClient() throws RemoteException {
-		System.out.println("hand-shake ok!");
+	public void notifyClient(String message) throws RemoteException {
+		System.out.println(message);
 	}
-	
-	public static void main(String args[]) {
-		String clientId = Integer.toString((int)(Math.random() * 1000));
-		//String clientId = Integer.toString(30);
-		System.out.println("Client "+clientId);
-		new Client(clientId) ;
-	  }
 
 
 	@Override
@@ -128,15 +119,24 @@ public class Client implements IClient {
 			System.out.println(msg.toString());
 		}
 	}
-	
-	public void sendMessage(String message) throws RemoteException {
-			System.out.println(message);
-	}
 
 	@Override
 	public void sendTopicList(Set<String> topics) throws RemoteException {	
 		System.out.println(topics);
 	}
 
+	
+	
+	
+	
+	
+	
+	public static void main(String args[]) {
+		String clientId = Integer.toString((int)(Math.random() * 1000));
+		System.out.println("Client "+clientId);
+		new Client(clientId) ;
+		}
+	
+	
 	
 }
