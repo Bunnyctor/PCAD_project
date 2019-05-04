@@ -43,7 +43,7 @@ public class Server implements IServer {
 		}
   
   
-	public synchronized void request(String clientId, IClient stub) throws RemoteException {
+	public synchronized void connect(String clientId, IClient stub) throws RemoteException {
 		System.out.println("Request dal client "+clientId);
 		try {
 			r.bind(clientId,stub);
@@ -51,6 +51,15 @@ public class Server implements IServer {
 		} catch (AlreadyBoundException | NotBoundException e) {
 		}
 		stub.notifyClient("hand-shake ok");
+	}
+	
+	public synchronized void disconnect(String clientId, IClient stub) throws RemoteException {
+		System.out.println("Request dal client "+clientId);
+		try {
+			r.unbind(clientId);
+			if (connectedClients.containsKey(clientId))	connectedClients.remove(clientId);
+		} catch (NotBoundException e) {
+		}
 	}
   
   
