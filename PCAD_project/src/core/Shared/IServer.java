@@ -2,7 +2,6 @@ package core.Shared;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Set;
 
 import core.Shared.IClient;
 import core.Shared.TopicMessage;
@@ -15,8 +14,7 @@ public interface IServer extends Remote,Serializable {
 	public void subscribe(String clientId, String topic) throws RemoteException;
 	public void unsubscribe(String clientId, String topic) throws RemoteException;
 	public void publish(String clientId, TopicMessage message)throws RemoteException;
-	public void getTopicList(String client)throws RemoteException;
-	public Set<String> getTopicList()throws RemoteException;
+	public void getTopicList(String clientId) throws RemoteException;
 	public void seeClientsOfAllTopics(String clientId) throws RemoteException;
 	public void seeClientsOfOneTopic(String clientId, String topic) throws RemoteException;
 }

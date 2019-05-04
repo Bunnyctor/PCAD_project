@@ -9,7 +9,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import core.Shared.IServer;
@@ -52,7 +51,6 @@ public class Server implements IServer {
 		}
 		try {
 			connectedClients.putIfAbsent(clientId,(IClient)r.lookup(clientId));
-			System.out.println(connectedClients.toString());
 		} catch (NotBoundException e) {
 		}
 		stub.notifyClient("hand-shake ok");
@@ -120,13 +118,6 @@ public class Server implements IServer {
 
 
 	@Override
-	public Set<String> getTopicList() throws RemoteException {
-		return topics.keySet();
-	}
-
-
-
-	@Override
 	public void seeClientsOfOneTopic(String clientId, String topic) throws RemoteException {
 		IClient cd = connectedClients.get(clientId);
 		if(topics.get(topic)!=null) {
@@ -150,14 +141,14 @@ public class Server implements IServer {
 
 
 	public static void main(String args[]) {
-			Server server = (Server)new Server();
-			IServer stubRequest;
-			try {
-				stubRequest = (IServer) UnicastRemoteObject.exportObject(server,0);
-				r.rebind("REG", stubRequest);
-			} catch (RemoteException e) {
-			}
-		    System.out.println("It works!\n");
+		Server server = (Server)new Server();
+		IServer stubRequest;
+		try {
+			stubRequest = (IServer)UnicastRemoteObject.exportObject(server,0);
+			r.rebind("REG", stubRequest);
+		} catch (RemoteException e) {
+		}
+		System.out.println("It works!\n");
 	}
 
 
