@@ -30,7 +30,7 @@ public class Client implements IClient {
 			Registry r = LocateRegistry.getRegistry(8000);
 			server = (IServer)r.lookup("REG");
 			stub = (IClient)UnicastRemoteObject.exportObject(this,0);
-			server.request(clientId,stub);
+			server.connect(clientId,stub);
 		} catch (RemoteException | NotBoundException e) {
 		}
 	}
