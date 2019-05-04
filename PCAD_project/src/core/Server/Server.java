@@ -47,11 +47,8 @@ public class Server implements IServer {
 		System.out.println("Request dal client "+clientId);
 		try {
 			r.bind(clientId,stub);
-		} catch (AlreadyBoundException e) {	
-		}
-		try {
 			connectedClients.putIfAbsent(clientId,(IClient)r.lookup(clientId));
-		} catch (NotBoundException e) {
+		} catch (AlreadyBoundException | NotBoundException e) {
 		}
 		stub.notifyClient("hand-shake ok");
 	}
@@ -103,11 +100,11 @@ public class Server implements IServer {
 
 	@Override
 	public void publish(String clientId, TopicMessage message) throws RemoteException {
-		if (!topics.containsKey(message.getTopic()))
-			connectedClients.get(clientId).notifyClient("Topic with name "+message.getTopic()+" does not exist");
-		else
+		if (topics.containsKey(message.getTopic()))
 			for(IClient cl : topics.get(message.getTopic()))
 				cl.sendMessage(message);
+		else
+			connectedClients.get(clientId).notifyClient("Topic with name "+message.getTopic()+" does not exist");
 	}
 
 
@@ -120,7 +117,7 @@ public class Server implements IServer {
 	@Override
 	public void seeClientsOfOneTopic(String clientId, String topic) throws RemoteException {
 		IClient cd = connectedClients.get(clientId);
-		if(topics.get(topic)!=null) {
+		if(topics.containsKey(topic)) {
 			cd.notifyClient("\nTopic: "+topic);
 			for(IClient subscriber : topics.get(topic))
 				for (AbstractMap.Entry<String,IClient> entry : connectedClients.entrySet())
