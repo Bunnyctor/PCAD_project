@@ -45,7 +45,7 @@ public class Client implements IClient {
 		System.out.println("4 \tSubscribe a topic");
 		System.out.println("5 \tUnsubscribe from a topic");
 		System.out.println("6 \tSee subscribers of a topic");
-		System.out.println("7 \tSee subscribers of all topics");
+		System.out.println("7 \tSee subscribers of all topics\n");
 	}
 		
 	public void notifyClient(String message) throws RemoteException {
@@ -118,9 +118,10 @@ public class Client implements IClient {
 					scanner.close();
 					return;
 				default:
+					System.out.println("Invalid choice");
 					break;
 				}
-				System.out.println("Press enter to continue");
+				System.out.println("\nPress enter to continue");
 				scanner.nextLine();
 				}
 			} catch (RemoteException e) {	
