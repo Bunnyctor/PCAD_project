@@ -54,8 +54,8 @@ public class Client implements IClient {
 
 
 	@Override
-	public void sendMessage(TopicMessage msg) throws RemoteException {
-		System.out.println(msg.toString());
+	public void sendMessage(TopicMessage message) throws RemoteException {
+		System.out.println(message.toString());
 	}
 
 	@Override
