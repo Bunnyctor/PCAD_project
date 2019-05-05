@@ -45,7 +45,8 @@ public class Client implements IClient {
 		System.out.println("4 \tSubscribe a topic");
 		System.out.println("5 \tUnsubscribe from a topic");
 		System.out.println("6 \tSee subscribers of a topic");
-		System.out.println("7 \tSee subscribers of all topics\n");
+		System.out.println("7 \tSee subscribers of all topics");
+		System.out.println("8 \tDisconnect from server\n");
 	}
 		
 	public void notifyClient(String message) throws RemoteException {
@@ -113,8 +114,8 @@ public class Client implements IClient {
 				case("7"):
 					server.seeClientsOfAllTopics(clientId);
 					break;
-				case("quit"):
-					System.out.println("\nQuitting..");
+				case("8"):
+					server.disconnect(clientId);
 					scanner.close();
 					return;
 				default:
@@ -125,6 +126,7 @@ public class Client implements IClient {
 				scanner.nextLine();
 				}
 			} catch (RemoteException e) {	
+				System.out.println("Client main has a problem\n");
 			}
 	}
 	

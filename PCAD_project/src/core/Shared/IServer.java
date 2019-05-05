@@ -10,6 +10,7 @@ import java.io.Serializable;
 
 public interface IServer extends Remote,Serializable {
 	public void connect(String clientId, IClient stub) throws RemoteException;
+	public void disconnect(String clientId) throws RemoteException;
 	public void createTopic(String clientId, String topic) throws RemoteException;
 	public void subscribe(String clientId, String topic) throws RemoteException;
 	public void unsubscribe(String clientId, String topic) throws RemoteException;
