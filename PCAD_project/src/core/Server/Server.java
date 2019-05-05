@@ -9,6 +9,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 import core.Shared.IServer;
@@ -17,47 +18,67 @@ import core.Shared.TopicMessage;
 
 public class Server implements IServer {
 	private static final long serialVersionUID = 1L;
-	private static Registry r = null;
-	private AbstractMap<String,IClient> connectedClients = new ConcurrentHashMap<>();
-	private AbstractMap<String,List<IClient>> topics = new ConcurrentHashMap<>();
+	private static Registry registry;
+	private AbstractMap<String,IClient> connectedClients;
+	private AbstractMap<String,List<IClient>> topics;
   
 	public Server() {
-		try {
-			System.setProperty("java.security.policy","file:./sec.policy");
-			System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
-			System.setProperty("java.rmi.server.hostname","localhost");
-			if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
-			try {
-				r = LocateRegistry.createRegistry(8000);
-				System.out.println("Registro creato");
-				} catch (RemoteException e) {
-					if (e.getMessage().contains("Port already in use"))
-						System.out.println("Port already in use. Trying to connect to it...");
-						r = LocateRegistry.getRegistry(8000);
-						System.out.println("Registro trovato");
-						}
-			}
-		catch (Exception e) {
+		connectedClients = new ConcurrentHashMap<>();
+		topics = new ConcurrentHashMap<>();
+		System.setProperty("java.security.policy","file:./sec.policy");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
+		System.setProperty("java.rmi.server.hostname","localhost");
+		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
+		Scanner scanner=new Scanner(System.in);
+		System.out.println("Insert port number:");
+		int port = 0;
+		if(scanner.hasNextInt())
+			port = scanner.nextInt();
+		else {
+			System.out.println("Port number was not an integer, so it has been randomized");
+			port = (int)(Math.random() * 10000);
 		}
+		scanner.close();
+		try {
+			registry = LocateRegistry.createRegistry(port);
+			System.out.println("Registry created at port "+port);
+			} catch (RemoteException e) {
+				if (e.getMessage().contains("Port already in use"))
+					System.out.println("Port already in use. Trying to connect to it...");
+					try {
+						registry = LocateRegistry.getRegistry(port);
+					} catch (RemoteException e1) {
+						System.out.println("Registry cannot be create at port "+port);
+					}
+					System.out.println("Registry found at port "+port);
+					}
 		System.out.println("Server creato");
 		}
   
-  
+
+	@Override
 	public synchronized void connect(String clientId, IClient stub) throws RemoteException {
 		System.out.println("Request dal client "+clientId);
 		try {
-			r.bind(clientId,stub);
-			connectedClients.putIfAbsent(clientId,(IClient)r.lookup(clientId));
+			registry.bind(clientId,stub);
+			connectedClients.putIfAbsent(clientId,(IClient)registry.lookup(clientId));
 		} catch (AlreadyBoundException | NotBoundException e) {
 		}
 		stub.notifyClient("hand-shake ok");
 	}
 	
-	public synchronized void disconnect(String clientId, IClient stub) throws RemoteException {
+	
+	@Override
+	public synchronized void disconnect(String clientId) throws RemoteException {
 		System.out.println("Request dal client "+clientId);
 		try {
-			r.unbind(clientId);
-			if (connectedClients.containsKey(clientId))	connectedClients.remove(clientId);
+			registry.unbind(clientId);
+			IClient cd = connectedClients.get(clientId);
+			cd.notifyClient("Quitting..");
+			for(List<IClient> clientList : topics.values())
+				clientList.remove(cd);
+			if (connectedClients.containsKey(clientId))	
+				connectedClients.remove(clientId);
 		} catch (NotBoundException e) {
 		}
 	}
@@ -151,7 +172,7 @@ public class Server implements IServer {
 		IServer stubRequest;
 		try {
 			stubRequest = (IServer)UnicastRemoteObject.exportObject(server,0);
-			r.rebind("REG", stubRequest);
+			registry.rebind("REG", stubRequest);
 		} catch (RemoteException e) {
 		}
 		System.out.println("It works!\n");
