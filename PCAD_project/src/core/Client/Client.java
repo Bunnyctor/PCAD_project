@@ -19,20 +19,21 @@ public class Client implements IClient {
     
 
    
-	public Client() {
+	public Client() throws Exception {
 		System.setProperty("java.security.policy","file:./sec.policy");
-		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
+		//System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
-		clientId = Integer.toString((int)(Math.random() * 1000));
+		clientId = Integer.toString((int)(Math.random() * 10));
 		try {
 			//Registry r = LocateRegistry.getRegistry("localhost",8000);
 			Registry r = LocateRegistry.getRegistry(8000);
 			server = (IServer)r.lookup("REG");
 			stub = (IClient)UnicastRemoteObject.exportObject(this,0);
 			server.connect(clientId,stub);
-		} catch (RemoteException | NotBoundException e) {
-		}
+			} catch (NotBoundException | RemoteException e) {
+				throw e;
+			}
 	}
 	
 	
@@ -46,7 +47,7 @@ public class Client implements IClient {
 		System.out.println("5 \tUnsubscribe from a topic");
 		System.out.println("6 \tSee subscribers of a topic");
 		System.out.println("7 \tSee subscribers of all topics");
-		System.out.println("8 \tDisconnect from server\n");
+		System.out.println("quit \tDisconnect from server\n");
 	}
 		
 	public void notifyClient(String message) throws RemoteException {
@@ -68,7 +69,13 @@ public class Client implements IClient {
 	
 	
 	public static void main(String args[]) {
-		Client client = new Client();
+		Client client;
+		try {
+			client = new Client();
+		} catch (Exception e) {
+			System.out.println(e.getCause());
+			return;
+		}
 		System.out.println("Client "+client.getClientId());
 		
 		try {
@@ -114,8 +121,12 @@ public class Client implements IClient {
 				case("7"):
 					server.seeClientsOfAllTopics(clientId);
 					break;
-				case("8"):
-					server.disconnect(clientId);
+				case("quit"):
+					try {
+						server.disconnect(clientId);
+					} catch(RemoteException e) {
+						break;
+					}
 					scanner.close();
 					return;
 				default:

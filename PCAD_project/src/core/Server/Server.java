@@ -23,22 +23,16 @@ public class Server implements IServer {
 	private AbstractMap<String,List<IClient>> topics;
   
 	public Server() {
+		this(8000);
+		}
+	
+	public Server(int port) {
 		connectedClients = new ConcurrentHashMap<>();
 		topics = new ConcurrentHashMap<>();
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
 		System.setProperty("java.rmi.server.hostname","localhost");
 		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
-		Scanner scanner=new Scanner(System.in);
-		System.out.println("Insert port number:");
-		int port = 0;
-		if(scanner.hasNextInt())
-			port = scanner.nextInt();
-		else {
-			System.out.println("Port number was not an integer, so it has been randomized");
-			port = (int)(Math.random() * 10000);
-		}
-		scanner.close();
 		try {
 			registry = LocateRegistry.createRegistry(port);
 			System.out.println("Registry created at port "+port);
@@ -47,10 +41,10 @@ public class Server implements IServer {
 					System.out.println("Port already in use. Trying to connect to it...");
 					try {
 						registry = LocateRegistry.getRegistry(port);
+						System.out.println("Registry found at port "+port);
 					} catch (RemoteException e1) {
 						System.out.println("Registry cannot be create at port "+port);
 					}
-					System.out.println("Registry found at port "+port);
 					}
 		System.out.println("Server creato");
 		}
@@ -58,29 +52,33 @@ public class Server implements IServer {
 
 	@Override
 	public synchronized void connect(String clientId, IClient stub) throws RemoteException {
-		System.out.println("Request dal client "+clientId);
 		try {
 			registry.bind(clientId,stub);
 			connectedClients.putIfAbsent(clientId,(IClient)registry.lookup(clientId));
 		} catch (AlreadyBoundException | NotBoundException e) {
+			System.out.println("Hand-shake failed, there already was a client with id "+clientId+"");
+			throw new RemoteException("Hand-shake failed, there already was a client with id "+clientId);
 		}
-		stub.notifyClient("hand-shake ok");
+		System.out.println("Hand-shake ok with "+clientId);
+		stub.notifyClient("Hand-shake ok");
 	}
 	
 	
 	@Override
 	public synchronized void disconnect(String clientId) throws RemoteException {
-		System.out.println("Request dal client "+clientId);
+		System.out.println("Client "+clientId+" is disconnecting..");
 		try {
 			registry.unbind(clientId);
-			IClient cd = connectedClients.get(clientId);
-			cd.notifyClient("Quitting..");
-			for(List<IClient> clientList : topics.values())
-				clientList.remove(cd);
-			if (connectedClients.containsKey(clientId))	
-				connectedClients.remove(clientId);
 		} catch (NotBoundException e) {
+			System.out.println("Disconnection failed, there was not a client with id "+clientId);
+			throw new RemoteException("Disconnection failed, there was not a client with id "+clientId);
 		}
+		IClient cd = connectedClients.get(clientId);
+		cd.notifyClient("Quitting..");
+		for(List<IClient> clientList : topics.values())
+			clientList.remove(cd);
+		if (connectedClients.containsKey(clientId))	
+			connectedClients.remove(clientId);
 	}
   
   
@@ -103,7 +101,7 @@ public class Server implements IServer {
 		try {
 			synchronized(clients) {
 				if (!clients.contains(cd))	clients.add(cd);
-				else	cd.notifyClient("You already subscribed the topic "+topic+'\n');
+				else	cd.notifyClient("You already subscribed the topic "+topic);
 			}
 		}
 		catch(NullPointerException e) {
@@ -168,7 +166,16 @@ public class Server implements IServer {
 
 
 	public static void main(String args[]) {
-		Server server = (Server)new Server();
+		Server server;
+		System.out.println("Insert port number:");
+		Scanner scanner=new Scanner(System.in);
+		if(scanner.hasNextInt())
+			server = (Server)new Server(scanner.nextInt());
+		else {
+			System.out.println("Port number was not an integer, so it has been randomized");
+			server = (Server)new Server((int)(Math.random() * 10000));
+		}
+		scanner.close();
 		IServer stubRequest;
 		try {
 			stubRequest = (IServer)UnicastRemoteObject.exportObject(server,0);
