@@ -24,7 +24,7 @@ public class Client implements IClient {
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
-		clientId = Integer.toString((int)(Math.random() * 10));
+		clientId = Integer.toString((int)(Math.random() * 1000));
 		try {
 			//Registry r = LocateRegistry.getRegistry("localhost",8000);
 			Registry r = LocateRegistry.getRegistry(8000);
@@ -57,7 +57,7 @@ public class Client implements IClient {
 
 	@Override
 	public void sendMessage(TopicMessage message) throws RemoteException {
-		System.out.println(message.toString());
+		System.out.println(message);
 	}
 
 	@Override

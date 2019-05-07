@@ -18,7 +18,7 @@ import core.Shared.TopicMessage;
 
 public class Server implements IServer {
 	private static final long serialVersionUID = 1L;
-	private static Registry registry;
+	private Registry registry;
 	private AbstractMap<String,IClient> connectedClients;
 	private AbstractMap<String,List<IClient>> topics;
   
@@ -31,8 +31,8 @@ public class Server implements IServer {
 		topics = new ConcurrentHashMap<>();
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
-		System.setProperty("java.rmi.server.hostname","localhost");
 		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
+		System.setProperty("java.rmi.server.hostname","localhost");
 		try {
 			registry = LocateRegistry.createRegistry(port);
 			System.out.println("Registry created at port "+port);
@@ -46,7 +46,7 @@ public class Server implements IServer {
 						System.out.println("Registry cannot be create at port "+port);
 					}
 					}
-		System.out.println("Server creato");
+		System.out.println("Server created at registry port "+port);
 		}
   
 
@@ -170,22 +170,23 @@ public class Server implements IServer {
 		System.out.println("Insert port number:");
 		Scanner scanner=new Scanner(System.in);
 		if(scanner.hasNextInt())
-			server = (Server)new Server(scanner.nextInt());
+			server = new Server(scanner.nextInt());
 		else {
 			System.out.println("Port number was not an integer, so it has been randomized");
-			server = (Server)new Server((int)(Math.random() * 10000));
+			server = new Server((int)(Math.random() * 10000));
 		}
 		scanner.close();
-		IServer stubRequest;
 		try {
-			stubRequest = (IServer)UnicastRemoteObject.exportObject(server,0);
-			registry.rebind("REG", stubRequest);
+			server.getRegistry().rebind("REG", (IServer)UnicastRemoteObject.exportObject(server,0));
 		} catch (RemoteException e) {
 		}
 		System.out.println("It works!\n");
 	}
 
 
+	public Registry getRegistry() {
+		return registry;
+	}
 
   
 }
