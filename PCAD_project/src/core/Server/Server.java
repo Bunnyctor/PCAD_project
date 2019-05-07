@@ -66,7 +66,6 @@ public class Server implements IServer {
 	
 	@Override
 	public synchronized void disconnect(String clientId) throws RemoteException {
-		System.out.println("Client "+clientId+" is disconnecting..");
 		try {
 			registry.unbind(clientId);
 		} catch (NotBoundException e) {
@@ -74,7 +73,8 @@ public class Server implements IServer {
 			throw new RemoteException("Disconnection failed, there was not a client with id "+clientId);
 		}
 		IClient cd = connectedClients.get(clientId);
-		cd.notifyClient("Quitting..");
+		System.out.println("Client "+clientId+" disconnected");
+		cd.notifyClient("Disconnecting..");
 		for(List<IClient> clientList : topics.values())
 			clientList.remove(cd);
 		if (connectedClients.containsKey(clientId))	

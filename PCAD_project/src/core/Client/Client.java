@@ -21,7 +21,7 @@ public class Client implements IClient {
    
 	public Client() throws Exception {
 		System.setProperty("java.security.policy","file:./sec.policy");
-		//System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
 		clientId = Integer.toString((int)(Math.random() * 10));
@@ -128,7 +128,8 @@ public class Client implements IClient {
 						break;
 					}
 					scanner.close();
-					return;
+					//return;
+					System.exit(0);
 				default:
 					System.out.println("Invalid choice");
 					break;
