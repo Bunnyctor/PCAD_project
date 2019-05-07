@@ -56,7 +56,7 @@ public class Server implements IServer {
 			registry.bind(clientId,stub);
 			connectedClients.putIfAbsent(clientId,(IClient)registry.lookup(clientId));
 		} catch (AlreadyBoundException | NotBoundException e) {
-			System.out.println("Hand-shake failed, there already was a client with id "+clientId+"");
+			System.out.println("Hand-shake failed with client "+clientId+", there already was a client with that id");
 			throw new RemoteException("Hand-shake failed, there already was a client with id "+clientId);
 		}
 		System.out.println("Hand-shake ok with "+clientId);
@@ -70,7 +70,7 @@ public class Server implements IServer {
 		try {
 			registry.unbind(clientId);
 		} catch (NotBoundException e) {
-			System.out.println("Disconnection failed, there was not a client with id "+clientId);
+			System.out.println("Disconnection failed with client "+clientId+", there was not a client with that id");
 			throw new RemoteException("Disconnection failed, there was not a client with id "+clientId);
 		}
 		IClient cd = connectedClients.get(clientId);
