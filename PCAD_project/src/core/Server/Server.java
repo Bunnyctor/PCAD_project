@@ -10,6 +10,7 @@ import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import core.Shared.IServer;
@@ -43,7 +44,7 @@ public class Server implements IServer {
 						registry = LocateRegistry.getRegistry(port);
 						System.out.println("Registry found at port "+port);
 					} catch (RemoteException e1) {
-						System.out.println("Registry cannot be create at port "+port);
+						System.out.println("Registry cannot be created at port "+port);
 					}
 					}
 		System.out.println("Server created at registry port "+port);
@@ -59,7 +60,7 @@ public class Server implements IServer {
 			System.out.println("Hand-shake failed with client "+clientId+", there already was a client with that id");
 			throw new RemoteException("Hand-shake failed, there already was a client with id "+clientId);
 		}
-		System.out.println("Hand-shake ok with "+clientId);
+		System.out.println("Client "+clientId+" connected");
 		stub.notifyClient("Hand-shake ok");
 	}
 	
@@ -72,11 +73,11 @@ public class Server implements IServer {
 			System.out.println("Disconnection failed with client "+clientId+", there was not a client with that id");
 			throw new RemoteException("Disconnection failed, there was not a client with id "+clientId);
 		}
-		IClient cd = connectedClients.get(clientId);
+		IClient client = connectedClients.get(clientId);
 		System.out.println("Client "+clientId+" disconnected");
-		cd.notifyClient("Disconnecting..");
+		client.notifyClient("Disconnecting..");
 		for(List<IClient> clientList : topics.values())
-			clientList.remove(cd);
+			clientList.remove(client);
 		if (connectedClients.containsKey(clientId))	
 			connectedClients.remove(clientId);
 	}
@@ -97,15 +98,15 @@ public class Server implements IServer {
 	@Override
 	public void subscribe(String clientId, String topic) throws RemoteException {
 		List<IClient> clients = topics.get(topic);
-		IClient cd = connectedClients.get(clientId);
+		IClient client = connectedClients.get(clientId);
 		try {
 			synchronized(clients) {
-				if (!clients.contains(cd))	clients.add(cd);
-				else	cd.notifyClient("You already subscribed the topic "+topic);
+				if (!clients.contains(client))	clients.add(client);
+				else	client.notifyClient("You already subscribed the topic "+topic);
 			}
 		}
 		catch(NullPointerException e) {
-			cd.notifyClient("Topic with name "+topic+" does not exists");
+			client.notifyClient("Topic with name "+topic+" does not exists");
 		}
 	}
 
@@ -113,15 +114,15 @@ public class Server implements IServer {
 	@Override
 	public void unsubscribe(String clientId, String topic) throws RemoteException {
 		List<IClient> clients = topics.get(topic);
-		IClient cd = connectedClients.get(clientId);
+		IClient client = connectedClients.get(clientId);
 		try {
 			synchronized(clients) {
-				if (clients.contains(cd))	clients.remove(cd);
-				else	cd.notifyClient("You are not subscribed to the topic "+topic+'\n');
+				if (clients.contains(client))	clients.remove(client);
+				else	client.notifyClient("You are not subscribed to the topic "+topic+'\n');
 			}
 		}
 		catch(NullPointerException e) {
-			cd.notifyClient("Topic with name "+topic+" does not exists");
+			client.notifyClient("Topic with name "+topic+" does not exists");
 		}
 	}
 
@@ -129,8 +130,8 @@ public class Server implements IServer {
 	@Override
 	public void publish(String clientId, TopicMessage message) throws RemoteException {
 		if (topics.containsKey(message.getTopic()))
-			for(IClient cl : topics.get(message.getTopic()))
-				cl.sendMessage(message);
+			for(IClient client : topics.get(message.getTopic()))
+				client.sendMessage(message);
 		else
 			connectedClients.get(clientId).notifyClient("Topic with name "+message.getTopic()+" does not exist");
 	}
@@ -143,23 +144,23 @@ public class Server implements IServer {
 
 
 	@Override
-	public void seeClientsOfOneTopic(String clientId, String topic) throws RemoteException {
-		IClient cd = connectedClients.get(clientId);
+	public void seeSubscribersOfOneTopic(String clientId, String topic) throws RemoteException {
+		IClient client = connectedClients.get(clientId);
 		if(topics.containsKey(topic)) {
-			cd.notifyClient("\nTopic: "+topic);
+			client.notifyClient("\nTopic: "+topic);
 			for(IClient subscriber : topics.get(topic))
 				for (AbstractMap.Entry<String,IClient> entry : connectedClients.entrySet())
 					if (entry.getValue().equals(subscriber))
-						cd.notifyClient(entry.getKey());
+						client.notifyClient(entry.getKey());
 		}
-		else	cd.notifyClient("Topic "+topic+" does not exists\n");
+		else	client.notifyClient("Topic "+topic+" does not exists\n");
 	}
 
 
 	@Override
-	public void seeClientsOfAllTopics(String clientId) throws RemoteException {
+	public void seeSubscribersOfAllTopics(String clientId) throws RemoteException {
 		for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet())
-			seeClientsOfOneTopic(clientId,topic.getKey());
+			seeSubscribersOfOneTopic(clientId,topic.getKey());
 	}
 
 
@@ -187,6 +188,38 @@ public class Server implements IServer {
 	public Registry getRegistry() {
 		return registry;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public void notifyClient(String message) throws RemoteException {
+		System.out.println(message);
+		
+	}
+	
+	
+	public void sendMessage(TopicMessage message) throws RemoteException {
+		System.out.println(message);
+		for(String clientId : connectedClients.keySet())
+			connectedClients.get(clientId).sendMessage(message);
+	}
+
+	
+	public void sendTopicList(Set<String> topics) throws RemoteException {	
+		System.out.println(topics);
+	}
+	
+	
+	
+	
+	
+	
 
   
 }

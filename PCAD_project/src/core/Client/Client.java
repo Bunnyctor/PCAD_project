@@ -13,9 +13,9 @@ import core.Shared.IServer;
 public class Client implements IClient {
    
 	private static final long serialVersionUID = 1L;
+    private String clientId;
     private IClient stub;
     private IServer server;
-    private String clientId;
     
 
    
@@ -30,7 +30,7 @@ public class Client implements IClient {
 			Registry r = LocateRegistry.getRegistry(8000);
 			server = (IServer)r.lookup("REG");
 			stub = (IClient)UnicastRemoteObject.exportObject(this,0);
-			server.connect(clientId,stub);
+			server.connect(this.getClientId(),this.getStub());
 			} catch (NotBoundException | RemoteException e) {
 				throw e;
 			}
@@ -49,7 +49,8 @@ public class Client implements IClient {
 		System.out.println("7 \tSee subscribers of all topics");
 		System.out.println("quit \tDisconnect from server\n");
 	}
-		
+	
+	@Override
 	public void notifyClient(String message) throws RemoteException {
 		System.out.println(message);
 	}
@@ -116,10 +117,10 @@ public class Client implements IClient {
 				case("6"):
 					System.out.println("Insert topic");
 					topic=scanner.nextLine();
-					server.seeClientsOfOneTopic(clientId,topic);
+					server.seeSubscribersOfOneTopic(clientId,topic);
 					break;
 				case("7"):
-					server.seeClientsOfAllTopics(clientId);
+					server.seeSubscribersOfAllTopics(clientId);
 					break;
 				case("quit"):
 					try {
@@ -128,7 +129,6 @@ public class Client implements IClient {
 						break;
 					}
 					scanner.close();
-					//return;
 					System.exit(0);
 				default:
 					System.out.println("Invalid choice");
@@ -144,12 +144,17 @@ public class Client implements IClient {
 	
 	
 	
+    public String getClientId() {
+    	return clientId;
+    }
+    
+    public IClient getStub() {
+    	return stub;
+    }
+	
     public IServer getServer() {
     	return server;
     }
     
-    public String getClientId() {
-    	return clientId;
-    }
 	
 }
