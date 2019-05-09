@@ -81,6 +81,7 @@ public class Client implements IClient {
 			client.connectToServer(scanner.nextLine());
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
+			scanner.close();
 			System.exit(0);
 		}
 		
