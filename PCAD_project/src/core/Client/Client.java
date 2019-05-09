@@ -26,7 +26,7 @@ public class Client implements IClient {
 		clientId = Integer.toString((int)(Math.random() * 1000));
 	}
 	
-	private void connectToServer(String clientId, String serverName) throws Exception {
+	private void connectToServer(String serverName) throws Exception {
 		try {
 			server = (IServer)LocateRegistry.getRegistry("localhost",8000).lookup(serverName);
 			} catch (NotBoundException e) {
@@ -34,7 +34,7 @@ public class Client implements IClient {
 			}
 		stub = (IClient)UnicastRemoteObject.exportObject(this,0);
 		try {
-			server.connect(clientId,stub);
+			server.connect(this.getClientId(),stub);
 			} catch (RemoteException e) {
 				throw new Exception("Server could not be connect");
 			}
@@ -64,7 +64,7 @@ public class Client implements IClient {
 	}
 
 	@Override
-	public void sendTopicList(Set<String> topics) throws RemoteException {	
+	public void getTopicList(Set<String> topics) throws RemoteException {	
 		System.out.println(topics);
 	}
 
@@ -78,7 +78,7 @@ public class Client implements IClient {
 		Scanner scanner=new Scanner(System.in);
 		System.out.println("Insert the server you want to connect to:");
 		try {
-			client.connectToServer(clientId, scanner.nextLine());
+			client.connectToServer(scanner.nextLine());
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			System.exit(0);
@@ -94,7 +94,7 @@ public class Client implements IClient {
 				choice=scanner.nextLine();
 				switch(choice) {
 				case("1"):
-					server.getTopicList(clientId);
+					server.sendTopicList(clientId);
 					break;
 				case("2"):
 					System.out.println("Create topic");
@@ -121,10 +121,10 @@ public class Client implements IClient {
 				case("6"):
 					System.out.println("Insert topic");
 					topic=scanner.nextLine();
-					server.seeSubscribersOfOneTopic(clientId,topic);
+					server.sendSubscribersOfOneTopic(clientId,topic);
 					break;
 				case("7"):
-					server.seeSubscribersOfAllTopics(clientId);
+					server.sendSubscribersOfAllTopics(clientId);
 					break;
 				case("quit"):
 					try {

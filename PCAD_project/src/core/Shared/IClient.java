@@ -9,5 +9,5 @@ import java.io.Serializable;
 public interface IClient extends Remote,Serializable {
 	public void notifyClient(String message) throws RemoteException;
 	public void sendMessage(TopicMessage message) throws RemoteException;
-	public void sendTopicList(Set<String> topics) throws RemoteException;
+	public void getTopicList(Set<String> topics) throws RemoteException;
 }
