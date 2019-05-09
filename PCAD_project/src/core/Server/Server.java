@@ -1,5 +1,10 @@
 package core.Server;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -9,6 +14,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,10 +45,9 @@ public class Server implements IServer {
 						registry = LocateRegistry.getRegistry(8000);
 						System.out.println("Registry found");
 					} catch (RemoteException e1) {
-						System.out.println("Registry cannot be created");
+						System.out.println("Registry could not be find or create");
 					}
 					}
-		System.out.println("Server created");
 		}
   
 
@@ -56,7 +61,7 @@ public class Server implements IServer {
 			throw new RemoteException("Hand-shake failed, there already was a client with id "+clientId);
 		}
 		System.out.println("Client "+clientId+" connected");
-		stub.notifyClient("Hand-shake ok");
+		stub.notifyClient("Hand-shake ok\n");
 	}
 	
 	
@@ -135,13 +140,13 @@ public class Server implements IServer {
 
 
 	@Override
-	public void getTopicList(String clientId) throws RemoteException {
-		connectedClients.get(clientId).sendTopicList(topics.keySet());
+	public void sendTopicList(String clientId) throws RemoteException {
+		connectedClients.get(clientId).getTopicList(topics.keySet());
 	}
 
 
 	@Override
-	public void seeSubscribersOfOneTopic(String clientId, String topic) throws RemoteException {
+	public void sendSubscribersOfOneTopic(String clientId, String topic) throws RemoteException {
 		IClient client = connectedClients.get(clientId);
 		if(topics.containsKey(topic)) {
 			client.notifyClient("\nTopic: "+topic);
@@ -155,32 +160,56 @@ public class Server implements IServer {
 
 
 	@Override
-	public void seeSubscribersOfAllTopics(String clientId) throws RemoteException {
+	public void sendSubscribersOfAllTopics(String clientId) throws RemoteException {
 		for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet())
-			seeSubscribersOfOneTopic(clientId,topic.getKey());
+			sendSubscribersOfOneTopic(clientId,topic.getKey());
 	}
 
-
+	
+	
 
 
 	public static void main(String args[]) {
+		System.out.println(getPublicIp());
 		Server server = new Server();
+		Scanner scanner=new Scanner(System.in);
+		System.out.println("Insert the server name you want to create:");
 		try {
-			server.getRegistry().rebind("REG",(IServer)UnicastRemoteObject.exportObject(server,0));
-		} catch (RemoteException e) {
+			server.bindToRegistry(scanner.nextLine());
+		} catch(RemoteException e) {
+			System.out.println(e.getMessage());
+			System.exit(0);
 		}
-		System.out.println("It works!\n");
-	}
-
-
-	public Registry getRegistry() {
-		return registry;
+		scanner.close();
 	}
 	
 	
 	
 	
 	
+	public void bindToRegistry(String serverName) throws RemoteException {
+		try {
+			registry.rebind(serverName,(IServer)UnicastRemoteObject.exportObject(this,0));
+			System.out.println("It works!\n");
+			} catch (RemoteException e) {
+			}
+		}
+	
+	
+	public static String getPublicIp() {
+		String ipAddress = "";
+		try 
+		{
+            ipAddress = "Public ip is: "+new BufferedReader(new InputStreamReader(new URL("http://bot.whatismyipaddress.com").openStream())).readLine().trim();
+            } catch (Exception e) {
+            	try {
+					ipAddress = "Local ip is: "+InetAddress.getLocalHost().getHostAddress().trim();
+				} catch (UnknownHostException e1) {
+					return "Could not get any ip address";
+				}
+            }
+		return ipAddress;
+		}
 	
 	
 	
@@ -199,15 +228,9 @@ public class Server implements IServer {
 	}
 
 	
-	public void sendTopicList(Set<String> topics) throws RemoteException {	
+	public void getTopicList(Set<String> topics) throws RemoteException {	
 		System.out.println(topics);
 	}
 	
-	
-	
-	
-	
-	
-
   
 }
