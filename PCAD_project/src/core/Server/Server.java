@@ -9,7 +9,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,14 +19,11 @@ import core.Shared.TopicMessage;
 public class Server implements IServer {
 	private static final long serialVersionUID = 1L;
 	private Registry registry;
-	private AbstractMap<String,IClient> connectedClients;
-	private AbstractMap<String,List<IClient>> topics;
+	private ConcurrentHashMap<String,IClient> connectedClients;
+	private ConcurrentHashMap<String,List<IClient>> topics;
   
-	public Server() {
-		this(8000);
-		}
 	
-	public Server(int port) {
+	public Server() {
 		connectedClients = new ConcurrentHashMap<>();
 		topics = new ConcurrentHashMap<>();
 		System.setProperty("java.security.policy","file:./sec.policy");
@@ -35,19 +31,18 @@ public class Server implements IServer {
 		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
 		try {
-			registry = LocateRegistry.createRegistry(port);
-			System.out.println("Registry created at port "+port);
+			registry = LocateRegistry.createRegistry(8000);
+			System.out.println("Registry created");
 			} catch (RemoteException e) {
 				if (e.getMessage().contains("Port already in use"))
-					System.out.println("Port already in use. Trying to connect to it...");
 					try {
-						registry = LocateRegistry.getRegistry(port);
-						System.out.println("Registry found at port "+port);
+						registry = LocateRegistry.getRegistry(8000);
+						System.out.println("Registry found");
 					} catch (RemoteException e1) {
-						System.out.println("Registry cannot be created at port "+port);
+						System.out.println("Registry cannot be created");
 					}
 					}
-		System.out.println("Server created at registry port "+port);
+		System.out.println("Server created");
 		}
   
 
@@ -85,7 +80,9 @@ public class Server implements IServer {
   
 	@Override
 	public void createTopic(String clientId, String topic) throws RemoteException {
-		if (!topics.containsKey(topic)) {
+		if(topic.isEmpty())
+			connectedClients.get(clientId).notifyClient("Topic name cannot be empty");
+		else if (!topics.containsKey(topic)) {
 	  		topics.put(topic, new LinkedList<IClient>());
 	  		subscribe(clientId,topic);
 		}
@@ -167,18 +164,9 @@ public class Server implements IServer {
 
 
 	public static void main(String args[]) {
-		Server server;
-		System.out.println("Insert port number:");
-		Scanner scanner=new Scanner(System.in);
-		if(scanner.hasNextInt())
-			server = new Server(scanner.nextInt());
-		else {
-			System.out.println("Port number was not an integer, so it has been randomized");
-			server = new Server((int)(Math.random() * 10000));
-		}
-		scanner.close();
+		Server server = new Server();
 		try {
-			server.getRegistry().rebind("REG", (IServer)UnicastRemoteObject.exportObject(server,0));
+			server.getRegistry().rebind("REG",(IServer)UnicastRemoteObject.exportObject(server,0));
 		} catch (RemoteException e) {
 		}
 		System.out.println("It works!\n");

@@ -2,7 +2,6 @@ package core.Client;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
@@ -19,24 +18,27 @@ public class Client implements IClient {
     
 
    
-	public Client() throws Exception {
+	public Client() {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
 		clientId = Integer.toString((int)(Math.random() * 1000));
-		try {
-			//Registry r = LocateRegistry.getRegistry("localhost",8000);
-			Registry r = LocateRegistry.getRegistry(8000);
-			server = (IServer)r.lookup("REG");
-			stub = (IClient)UnicastRemoteObject.exportObject(this,0);
-			server.connect(this.getClientId(),this.getStub());
-			} catch (NotBoundException | RemoteException e) {
-				throw e;
-			}
 	}
 	
-	
+	private void connectToServer(String clientId, String serverName) throws Exception {
+		try {
+			server = (IServer)LocateRegistry.getRegistry("localhost",8000).lookup(serverName);
+			} catch (NotBoundException e) {
+				throw new Exception("Server could not be find");
+			}
+		stub = (IClient)UnicastRemoteObject.exportObject(this,0);
+		try {
+			server.connect(clientId,stub);
+			} catch (RemoteException e) {
+				throw new Exception("Server could not be connect");
+			}
+	}
 	
 	private static void menu() {
 		System.out.println("Press:");
@@ -70,25 +72,27 @@ public class Client implements IClient {
 	
 	
 	public static void main(String args[]) {
-		Client client;
+		Client client = new Client();
+		String clientId=client.getClientId();
+		System.out.println("Client "+clientId);
+		Scanner scanner=new Scanner(System.in);
+		System.out.println("Insert the server you want to connect to:");
 		try {
-			client = new Client();
+			client.connectToServer(clientId, scanner.nextLine());
 		} catch (Exception e) {
-			System.out.println(e.getCause());
-			return;
+			System.out.println(e.getMessage());
+			System.exit(0);
 		}
-		System.out.println("Client "+client.getClientId());
+		
 		
 		try {
-			Scanner scanner=new Scanner(System.in);
-			String topic, message;
-			String clientId=client.getClientId();
+			String choice, topic, message;
 			IServer server=client.getServer();
 	
 			while(true) {
 				menu();
-				topic=scanner.nextLine();
-				switch(topic) {
+				choice=scanner.nextLine();
+				switch(choice) {
 				case("1"):
 					server.getTopicList(clientId);
 					break;
@@ -138,7 +142,7 @@ public class Client implements IClient {
 				scanner.nextLine();
 				}
 			} catch (RemoteException e) {	
-				System.out.println("Client main has a problem\n");
+				System.out.println("Client main had a problem\n");
 			}
 	}
 	
