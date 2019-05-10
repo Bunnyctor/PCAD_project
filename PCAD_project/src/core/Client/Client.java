@@ -13,7 +13,6 @@ public class Client implements IClient {
    
 	private static final long serialVersionUID = 1L;
     private String clientId;
-    private IClient stub;
     private IServer server;
     
 
@@ -21,7 +20,6 @@ public class Client implements IClient {
 	public Client() {
 		setProperty();
 		clientId = Integer.toString((int)(Math.random() * 1000));
-		stub=null;
 		server=null;
 	}
 	
@@ -32,15 +30,14 @@ public class Client implements IClient {
 		System.setProperty("java.rmi.server.hostname","localhost");
 	}
 	
-	private void connectToServer(String serverName) throws Exception {
+	private void connectToServer(String serverIp, String serverName) throws Exception {
 		try {
-			server = (IServer)LocateRegistry.getRegistry("192.168.1.102",8000).lookup(serverName);
+			server = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
 			} catch (NotBoundException e) {
 				throw new Exception("Server could not be found");
 			}
-		stub = (IClient)UnicastRemoteObject.exportObject(this,0);
 		try {
-			server.connect(this.getClientId(),stub);
+			server.connect(this.getClientId(),(IClient)UnicastRemoteObject.exportObject(this,0));
 			} catch (RemoteException e) {
 				throw new Exception("Server could not be connected");
 			}
@@ -82,9 +79,11 @@ public class Client implements IClient {
 		String clientId=client.getClientId();
 		System.out.println("Client "+clientId);
 		Scanner scanner=new Scanner(System.in);
-		System.out.println("Insert the server you want to connect to:");
 		try {
-			client.connectToServer(scanner.nextLine());
+			System.out.println("Insert the server IP you want to connect to:");
+			String serverIp = scanner.nextLine();
+			System.out.println("Insert the server name you want to connect to:");
+			client.connectToServer(serverIp,scanner.nextLine());
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			scanner.close();
@@ -93,7 +92,7 @@ public class Client implements IClient {
 		
 		
 		try {
-			String choice, topic, message;
+			String choice, topic;
 			IServer server=client.getServer();
 	
 			while(true) {
@@ -105,15 +104,13 @@ public class Client implements IClient {
 					break;
 				case("2"):
 					System.out.println("Create topic");
-					topic=scanner.nextLine();
-					server.createTopic(clientId,topic);
+					server.createTopic(clientId,scanner.nextLine());
 					break;
 				case("3"):
 					System.out.println("Insert topic");
 					topic=scanner.nextLine();
 					System.out.println("Insert post");
-					message=scanner.nextLine();
-					server.publish(clientId,new TopicMessage(topic,message,clientId));
+					server.publish(clientId,new TopicMessage(topic,scanner.nextLine(),clientId));
 					break;
 				case("4"):
 					System.out.println("Insert topic to subscribe");
@@ -157,10 +154,6 @@ public class Client implements IClient {
 	
     public String getClientId() {
     	return clientId;
-    }
-    
-    public IClient getStub() {
-    	return stub;
     }
 	
     public IServer getServer() {
