@@ -21,7 +21,7 @@ import core.Shared.TopicMessage;
 
 public class Server implements IServer {
 	private static final long serialVersionUID = 1L;
-	private String id;
+	private String privateIp;
 	private Registry registry;
 	private ConcurrentHashMap<String,IClient> connectedClients;
 	private ConcurrentHashMap<String,List<IClient>> topics;
@@ -29,7 +29,7 @@ public class Server implements IServer {
 	
 	public Server() {
 		try {
-			id=InetAddress.getLocalHost().getHostAddress();
+			privateIp=InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e) {
 			System.out.println("PrivateIP could not be found");
 			System.exit(0);
@@ -149,13 +149,13 @@ public class Server implements IServer {
 
 
 	@Override
-	public void sendTopicList(String clientId) throws RemoteException {
+	public void showTopicList(String clientId) throws RemoteException {
 		connectedClients.get(clientId).getTopicList(topics.keySet());
 	}
 
 
 	@Override
-	public void sendSubscribersOfOneTopic(String clientId, String topic) throws RemoteException {
+	public void showSubscribersOfOneTopic(String clientId, String topic) throws RemoteException {
 		IClient client = connectedClients.get(clientId);
 		if(topics.containsKey(topic)) {
 			client.notifyClient("\nTopic: "+topic);
@@ -169,9 +169,9 @@ public class Server implements IServer {
 
 
 	@Override
-	public void sendSubscribersOfAllTopics(String clientId) throws RemoteException {
+	public void showSubscribersOfAllTopics(String clientId) throws RemoteException {
 		for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet())
-			sendSubscribersOfOneTopic(clientId,topic.getKey());
+			showSubscribersOfOneTopic(clientId,topic.getKey());
 	}
 
 	
@@ -223,7 +223,7 @@ public class Server implements IServer {
 	
 	
 	public String getId() {
-	    return id;
+	    return privateIp;
 	}
   
 }

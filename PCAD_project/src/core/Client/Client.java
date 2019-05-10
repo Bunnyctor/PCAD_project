@@ -12,15 +12,15 @@ import core.Shared.IServer;
 public class Client implements IClient {
    
 	private static final long serialVersionUID = 1L;
-    private String clientId;
-    private IServer server;
+    private String id;
+    private IServer serverToConnect;
     
 
    
 	public Client() {
 		setProperty();
-		clientId = Integer.toString((int)(Math.random() * 1000));
-		server=null;
+		id = Integer.toString((int)(Math.random() * 1000));
+		serverToConnect=null;
 	}
 	
 	private static void setProperty() {
@@ -32,12 +32,12 @@ public class Client implements IClient {
 	
 	private void connectToServer(String serverIp, String serverName) throws Exception {
 		try {
-			server = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
+			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
 			} catch (NotBoundException e) {
 				throw new Exception("Server could not be found");
 			}
 		try {
-			server.connect(this.getClientId(),(IClient)UnicastRemoteObject.exportObject(this,0));
+			serverToConnect.connect(this.getId(),(IClient)UnicastRemoteObject.exportObject(this,0));
 			} catch (RemoteException e) {
 				throw new Exception("Server could not be connected");
 			}
@@ -76,7 +76,7 @@ public class Client implements IClient {
 	
 	public static void main(String args[]) {
 		Client client = new Client();
-		String clientId=client.getClientId();
+		String clientId=client.getId();
 		System.out.println("Client "+clientId);
 		Scanner scanner=new Scanner(System.in);
 		try {
@@ -92,7 +92,7 @@ public class Client implements IClient {
 		
 		
 		try {
-			String choice, topic;
+			String choice,topic;
 			IServer server=client.getServer();
 	
 			while(true) {
@@ -100,7 +100,7 @@ public class Client implements IClient {
 				choice=scanner.nextLine();
 				switch(choice) {
 				case("1"):
-					server.sendTopicList(clientId);
+					server.showTopicList(clientId);
 					break;
 				case("2"):
 					System.out.println("Create topic");
@@ -125,10 +125,10 @@ public class Client implements IClient {
 				case("6"):
 					System.out.println("Insert topic");
 					topic=scanner.nextLine();
-					server.sendSubscribersOfOneTopic(clientId,topic);
+					server.showSubscribersOfOneTopic(clientId,topic);
 					break;
 				case("7"):
-					server.sendSubscribersOfAllTopics(clientId);
+					server.showSubscribersOfAllTopics(clientId);
 					break;
 				case("quit"):
 					try {
@@ -152,12 +152,12 @@ public class Client implements IClient {
 	
 	
 	
-    public String getClientId() {
-    	return clientId;
+    public String getId() {
+    	return id;
     }
 	
     public IServer getServer() {
-    	return server;
+    	return serverToConnect;
     }
     
 	
