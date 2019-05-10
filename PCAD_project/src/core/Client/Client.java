@@ -28,15 +28,15 @@ public class Client implements IClient {
 	
 	private void connectToServer(String serverName) throws Exception {
 		try {
-			server = (IServer)LocateRegistry.getRegistry("localhost",8000).lookup(serverName);
+			server = (IServer)LocateRegistry.getRegistry("192.168.1.102",8000).lookup(serverName);
 			} catch (NotBoundException e) {
-				throw new Exception("Server could not be find");
+				throw new Exception("Server could not be found");
 			}
 		stub = (IClient)UnicastRemoteObject.exportObject(this,0);
 		try {
 			server.connect(this.getClientId(),stub);
 			} catch (RemoteException e) {
-				throw new Exception("Server could not be connect");
+				throw new Exception("Server could not be connected");
 			}
 	}
 	

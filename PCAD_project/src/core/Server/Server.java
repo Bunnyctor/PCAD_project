@@ -1,9 +1,6 @@
 package core.Server;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
@@ -45,7 +42,7 @@ public class Server implements IServer {
 						registry = LocateRegistry.getRegistry(8000);
 						System.out.println("Registry found");
 					} catch (RemoteException e1) {
-						System.out.println("Registry could not be find or create");
+						System.out.println("Registry could not be found or created");
 					}
 					}
 		}
@@ -170,7 +167,7 @@ public class Server implements IServer {
 
 
 	public static void main(String args[]) {
-		System.out.println(getPublicIp());
+		getPrivateIp();
 		Server server = new Server();
 		Scanner scanner=new Scanner(System.in);
 		System.out.println("Insert the server name you want to create:");
@@ -187,6 +184,14 @@ public class Server implements IServer {
 	
 	
 	
+	public static void getPrivateIp() {
+	    try {
+			System.out.println("Private ip: " + InetAddress.getLocalHost().getHostAddress());
+		} catch (UnknownHostException e1) {
+		}
+	}
+	
+	
 	public void bindToRegistry(String serverName) throws RemoteException {
 		try {
 			registry.rebind(serverName,(IServer)UnicastRemoteObject.exportObject(this,0));
@@ -194,23 +199,6 @@ public class Server implements IServer {
 			} catch (RemoteException e) {
 			}
 		}
-	
-	
-	public static String getPublicIp() {
-		String ipAddress = "";
-		try 
-		{
-            ipAddress = "Public ip is: "+new BufferedReader(new InputStreamReader(new URL("http://bot.whatismyipaddress.com").openStream())).readLine().trim();
-            } catch (Exception e) {
-            	try {
-					ipAddress = "Local ip is: "+InetAddress.getLocalHost().getHostAddress().trim();
-				} catch (UnknownHostException e1) {
-					return "Could not get any ip address";
-				}
-            }
-		return ipAddress;
-		}
-	
 	
 	
 	
