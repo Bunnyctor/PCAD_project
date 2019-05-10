@@ -21,12 +21,19 @@ import core.Shared.TopicMessage;
 
 public class Server implements IServer {
 	private static final long serialVersionUID = 1L;
+	private String id;
 	private Registry registry;
 	private ConcurrentHashMap<String,IClient> connectedClients;
 	private ConcurrentHashMap<String,List<IClient>> topics;
   
 	
 	public Server() {
+		try {
+			id=InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e) {
+			System.out.println("PrivateIP could not be found");
+			System.exit(0);
+		}
 		connectedClients = new ConcurrentHashMap<>();
 		topics = new ConcurrentHashMap<>();
 		setProperty();
@@ -40,6 +47,7 @@ public class Server implements IServer {
 						System.out.println("Registry found");
 					} catch (RemoteException e1) {
 						System.out.println("Registry could not be found or created");
+						System.exit(0);
 					}
 					}
 		}
@@ -48,7 +56,7 @@ public class Server implements IServer {
 	private static void setProperty() {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
-		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
+		if (System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
 	}
 
@@ -171,8 +179,8 @@ public class Server implements IServer {
 
 
 	public static void main(String args[]) {
-		getPrivateIp();
 		Server server = new Server();
+		System.out.println("Private ip: " + server.getId());
 		Scanner scanner=new Scanner(System.in);
 		System.out.println("Insert the server name you want to create:");
 		try {
@@ -182,17 +190,6 @@ public class Server implements IServer {
 			System.exit(0);
 		}
 		scanner.close();
-	}
-	
-	
-	
-	
-	
-	public static void getPrivateIp() {
-	    try {
-			System.out.println("Private ip: " + InetAddress.getLocalHost().getHostAddress());
-		} catch (UnknownHostException e) {
-		}
 	}
 	
 	
@@ -224,5 +221,9 @@ public class Server implements IServer {
 		System.out.println(topics);
 	}
 	
+	
+	public String getId() {
+	    return id;
+	}
   
 }
