@@ -19,11 +19,17 @@ public class Client implements IClient {
 
    
 	public Client() {
+		setProperty();
+		clientId = Integer.toString((int)(Math.random() * 1000));
+		stub=null;
+		server=null;
+	}
+	
+	private static void setProperty() {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname","localhost");
-		clientId = Integer.toString((int)(Math.random() * 1000));
 	}
 	
 	private void connectToServer(String serverName) throws Exception {

@@ -29,10 +29,7 @@ public class Server implements IServer {
 	public Server() {
 		connectedClients = new ConcurrentHashMap<>();
 		topics = new ConcurrentHashMap<>();
-		System.setProperty("java.security.policy","file:./sec.policy");
-		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
-		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
-		System.setProperty("java.rmi.server.hostname","localhost");
+		setProperty();
 		try {
 			registry = LocateRegistry.createRegistry(8000);
 			System.out.println("Registry created");
@@ -47,6 +44,13 @@ public class Server implements IServer {
 					}
 		}
   
+	
+	private static void setProperty() {
+		System.setProperty("java.security.policy","file:./sec.policy");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
+		if(System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
+		System.setProperty("java.rmi.server.hostname","localhost");
+	}
 
 	@Override
 	public synchronized void connect(String clientId, IClient stub) throws RemoteException {
@@ -187,7 +191,7 @@ public class Server implements IServer {
 	public static void getPrivateIp() {
 	    try {
 			System.out.println("Private ip: " + InetAddress.getLocalHost().getHostAddress());
-		} catch (UnknownHostException e1) {
+		} catch (UnknownHostException e) {
 		}
 	}
 	
