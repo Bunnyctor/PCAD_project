@@ -180,7 +180,7 @@ public class Server implements IServer {
 
 	public static void main(String args[]) {
 		Server server = new Server();
-		System.out.println("Private ip: " + server.getId());
+		System.out.println("Private ip: " + server.getPrivateIp());
 		Scanner scanner=new Scanner(System.in);
 		System.out.println("Insert the server name you want to create:");
 		try {
@@ -222,7 +222,7 @@ public class Server implements IServer {
 	}
 	
 	
-	public String getId() {
+	public String getPrivateIp() {
 	    return privateIp;
 	}
   
