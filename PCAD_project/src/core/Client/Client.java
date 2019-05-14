@@ -18,16 +18,15 @@ public class Client implements IClient {
 
    
 	public Client() {
-		setProperty();
 		id = Integer.toString((int)(Math.random() * 1000));
 		serverToConnect=null;
 	}
 	
-	private static void setProperty() {
+	private static void setProperty(String ip) {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
-		System.setProperty("java.rmi.server.hostname","localhost");
+		System.setProperty("java.rmi.server.hostname",ip);
 	}
 	
 	private void connectToServer(String serverIp, String serverName) throws Exception {
@@ -82,6 +81,7 @@ public class Client implements IClient {
 		try {
 			System.out.println("Insert the server IP you want to connect to:");
 			String serverIp = scanner.nextLine();
+			setProperty(serverIp);
 			System.out.println("Insert the server name you want to connect to:");
 			client.connectToServer(serverIp,scanner.nextLine());
 		} catch (Exception e) {

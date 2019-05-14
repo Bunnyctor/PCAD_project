@@ -57,7 +57,6 @@ public class Server implements IServer {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
 		if (System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
-		System.setProperty("java.rmi.server.hostname","localhost");
 	}
 
 	@Override
