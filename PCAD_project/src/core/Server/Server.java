@@ -36,7 +36,6 @@ public class Server implements IServer {
 		}
 		connectedClients = new ConcurrentHashMap<>();
 		topics = new ConcurrentHashMap<>();
-		setProperty();
 		try {
 			registry = LocateRegistry.createRegistry(8000);
 			System.out.println("Registry created");
@@ -57,6 +56,7 @@ public class Server implements IServer {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
 		if (System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
+		//System.setProperty("java.rmi.server.hostname",ip);
 	}
 
 	@Override
@@ -88,6 +88,7 @@ public class Server implements IServer {
 			clientList.remove(client);
 		if (connectedClients.containsKey(clientId))	
 			connectedClients.remove(clientId);
+		//UnicastRemoteObject.unexportObject(client,true);
 	}
   
   
@@ -182,6 +183,7 @@ public class Server implements IServer {
 		System.out.println("Private ip: " + server.getPrivateIp());
 		Scanner scanner=new Scanner(System.in);
 		System.out.println("Insert the server name you want to create:");
+		setProperty();
 		try {
 			server.bindToRegistry(scanner.nextLine());
 		} catch(RemoteException e) {
