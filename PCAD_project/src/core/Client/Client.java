@@ -24,7 +24,7 @@ public class Client implements IClient {
 	
 	private static void setProperty(String ip) {
 		System.setProperty("java.security.policy","file:./sec.policy");
-		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/sec.policy");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname",ip);
 	}
@@ -38,7 +38,8 @@ public class Client implements IClient {
 		try {
 			serverToConnect.connect(this.getId(),(IClient)UnicastRemoteObject.exportObject(this,0));
 			} catch (RemoteException e) {
-				throw new RemoteException("Server could not be connected");
+				throw e;
+				//throw new RemoteException("Server could not be connected");
 			}
 	}
 	

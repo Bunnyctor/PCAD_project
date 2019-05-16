@@ -3,7 +3,7 @@ grant {
 };
 
 grant {
-	permission java.net.SocketPermission "*:1099", "connect, accept, resolve";
+	permission java.net.SocketPermission "*:7900-8100", "connect, accept, resolve";
 	// This allows RMI clients to contact the RMIRegistry of any host 
 	permission java.net.SocketPermission "*:1024-65535", "connect, accept, resolve";
 	// This allows RMI clients to make network connections to the public ports on any host .....

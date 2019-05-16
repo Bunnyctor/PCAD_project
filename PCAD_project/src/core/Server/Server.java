@@ -52,11 +52,11 @@ public class Server implements IServer {
 		}
   
 	
-	private static void setProperty() {
+	private static void setProperty(String ip) {
 		System.setProperty("java.security.policy","file:./sec.policy");
-		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/sec.policy");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
 		if (System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
-		//System.setProperty("java.rmi.server.hostname",ip);
+		System.setProperty("java.rmi.server.hostname",ip);
 	}
 
 	@Override
@@ -68,6 +68,7 @@ public class Server implements IServer {
 			System.out.println("Hand-shake failed with client "+clientId+", there already was a client with that id");
 			throw new RemoteException("Hand-shake failed, there already was a client with id "+clientId);
 		}
+		System.out.println(stub.toString());
 		System.out.println("Client "+clientId+" connected");
 		stub.notifyClient("Hand-shake ok\n");
 	}
@@ -182,7 +183,7 @@ public class Server implements IServer {
 		System.out.println("Private ip: " + server.getPrivateIp());
 		Scanner scanner=new Scanner(System.in);
 		System.out.println("Insert the server name you want to create:");
-		setProperty();
+		setProperty(server.getPrivateIp());
 		try {
 			server.bindToRegistry(scanner.nextLine());
 		} catch(RemoteException e) {
@@ -205,8 +206,7 @@ public class Server implements IServer {
 	
 	
 	public void notifyClient(String message) throws RemoteException {
-		System.out.println(message);
-		
+		System.out.println(message);	
 	}
 	
 	
