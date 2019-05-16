@@ -24,7 +24,7 @@ public class Client implements IClient {
 	
 	private static void setProperty(String ip) {
 		System.setProperty("java.security.policy","file:./sec.policy");
-		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/sec.policy");
 		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname",ip);
 	}
@@ -38,11 +38,24 @@ public class Client implements IClient {
 		try {
 			serverToConnect.connect(this.getId(),(IClient)UnicastRemoteObject.exportObject(this,0));
 			} catch (RemoteException e) {
-				throw new Exception("Server could not be connected");
+				throw new RemoteException("Server could not be connected");
 			}
 	}
 	
+	
+	private void disconnectFromServer() throws RemoteException {
+		try {
+			this.getServer().disconnect(this.getId());
+			UnicastRemoteObject.unexportObject(this,true);
+		} catch(RemoteException e) {
+			throw new RemoteException("Client could not be disconnected");
+		}
+		System.exit(0);
+	}
+	
+	
 	private static void menu() {
+		System.out.println("\n\n*************************************");
 		System.out.println("Press:");
 		System.out.println("1 \tGet all topics");
 		System.out.println("2 \tCreate topic");
@@ -51,7 +64,8 @@ public class Client implements IClient {
 		System.out.println("5 \tUnsubscribe from a topic");
 		System.out.println("6 \tSee subscribers of a topic");
 		System.out.println("7 \tSee subscribers of all topics");
-		System.out.println("quit \tDisconnect from server\n");
+		System.out.println("quit \tDisconnect from server");
+		System.out.println("*************************************\n");
 	}
 	
 	@Override
@@ -90,15 +104,11 @@ public class Client implements IClient {
 			System.exit(0);
 		}
 		
-		
 		try {
-			String choice,topic;
 			IServer server=client.getServer();
-	
 			while(true) {
 				menu();
-				choice=scanner.nextLine();
-				switch(choice) {
+				switch(scanner.nextLine()) {
 				case("1"):
 					server.showTopicList(clientId);
 					break;
@@ -108,42 +118,37 @@ public class Client implements IClient {
 					break;
 				case("3"):
 					System.out.println("Insert topic");
-					topic=scanner.nextLine();
+					String topic=scanner.nextLine();
 					System.out.println("Insert post");
 					server.publish(clientId,new TopicMessage(topic,scanner.nextLine(),clientId));
 					break;
 				case("4"):
 					System.out.println("Insert topic to subscribe");
-					topic=scanner.nextLine();
-					server.subscribe(clientId,topic);
+					server.subscribe(clientId,scanner.nextLine());
 					break;
 				case("5"):
 					System.out.println("Insert topic to unsubscribe");
-					topic=scanner.nextLine();
-					server.unsubscribe(clientId,topic);
+					server.unsubscribe(clientId,scanner.nextLine());
 					break;
 				case("6"):
 					System.out.println("Insert topic");
-					topic=scanner.nextLine();
-					server.showSubscribersOfOneTopic(clientId,topic);
+					server.showSubscribersOfOneTopic(clientId,scanner.nextLine());
 					break;
 				case("7"):
 					server.showSubscribersOfAllTopics(clientId);
 					break;
 				case("quit"):
 					try {
-						server.disconnect(clientId);
-					} catch(RemoteException e) {
-						break;
+						client.disconnectFromServer();
+						scanner.close();
+						} catch(RemoteException e) {
+							System.out.println(e.getMessage());
+							break;
 					}
-					scanner.close();
-					System.exit(0);
 				default:
-					System.out.println("Invalid choice");
+					System.out.println("\nInvalid choice");
 					break;
 				}
-				System.out.println("\nPress enter to continue");
-				scanner.nextLine();
 				}
 			} catch (RemoteException e) {	
 				System.out.println("Client main had a problem\n");

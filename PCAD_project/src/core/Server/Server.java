@@ -54,7 +54,7 @@ public class Server implements IServer {
 	
 	private static void setProperty() {
 		System.setProperty("java.security.policy","file:./sec.policy");
-		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/sec.policy");
 		if (System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
 		//System.setProperty("java.rmi.server.hostname",ip);
 	}
@@ -88,7 +88,6 @@ public class Server implements IServer {
 			clientList.remove(client);
 		if (connectedClients.containsKey(clientId))	
 			connectedClients.remove(clientId);
-		//UnicastRemoteObject.unexportObject(client,true);
 	}
   
   
