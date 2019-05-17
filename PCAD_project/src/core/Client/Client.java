@@ -36,7 +36,7 @@ public class Client implements IClient {
 				throw new Exception("Server could not be found");
 			}
 		try {
-			serverToConnect.connect(this.getId(),(IClient)UnicastRemoteObject.exportObject(this,0));
+			serverToConnect.connect(this.id,(IClient)UnicastRemoteObject.exportObject(this,0));
 			} catch (RemoteException e) {
 				throw new Exception("Server could not be connected");
 			}
@@ -75,8 +75,7 @@ public class Client implements IClient {
 	
 	public static void main(String args[]) {
 		Client client = new Client();
-		String clientId=client.getId();
-		System.out.println("Client "+clientId);
+		System.out.println("ClientId "+client.id);
 		Scanner scanner=new Scanner(System.in);
 		try {
 			System.out.println("Insert the server IP you want to connect to:");
@@ -93,49 +92,44 @@ public class Client implements IClient {
 		
 		try {
 			String choice,topic;
-			IServer server=client.getServer();
 	
 			while(true) {
 				menu();
 				choice=scanner.nextLine();
 				switch(choice) {
 				case("1"):
-					server.showTopicList(clientId);
+					client.serverToConnect.showTopicList(client.id);
 					break;
 				case("2"):
 					System.out.println("Create topic");
-					server.createTopic(clientId,scanner.nextLine());
+					client.serverToConnect.createTopic(client.id,scanner.nextLine());
 					break;
 				case("3"):
 					System.out.println("Insert topic");
 					topic=scanner.nextLine();
 					System.out.println("Insert post");
-					server.publish(clientId,new TopicMessage(topic,scanner.nextLine(),clientId));
+					client.serverToConnect.publish(client.id,new TopicMessage(topic,scanner.nextLine(),client.id));
 					break;
 				case("4"):
 					System.out.println("Insert topic to subscribe");
 					topic=scanner.nextLine();
-					server.subscribe(clientId,topic);
+					client.serverToConnect.subscribe(client.id,topic);
 					break;
 				case("5"):
 					System.out.println("Insert topic to unsubscribe");
 					topic=scanner.nextLine();
-					server.unsubscribe(clientId,topic);
+					client.serverToConnect.unsubscribe(client.id,topic);
 					break;
 				case("6"):
 					System.out.println("Insert topic");
 					topic=scanner.nextLine();
-					server.showSubscribersOfOneTopic(clientId,topic);
+					client.serverToConnect.showSubscribersOfOneTopic(client.id,topic);
 					break;
 				case("7"):
-					server.showSubscribersOfAllTopics(clientId);
+					client.serverToConnect.showSubscribersOfAllTopics(client.id);
 					break;
 				case("quit"):
-					try {
-						server.disconnect(clientId);
-					} catch(RemoteException e) {
-						break;
-					}
+					client.serverToConnect.disconnect(client.id);
 					scanner.close();
 					System.exit(0);
 				default:
@@ -147,18 +141,9 @@ public class Client implements IClient {
 				}
 			} catch (RemoteException e) {	
 				System.out.println("Client main had a problem\n");
+				System.exit(0);
 			}
 	}
-	
-	
-	
-    public String getId() {
-    	return id;
-    }
-	
-    public IServer getServer() {
-    	return serverToConnect;
-    }
     
 	
 }

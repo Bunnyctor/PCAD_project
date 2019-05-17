@@ -19,12 +19,15 @@ import core.Shared.IServer;
 import core.Shared.IClient;
 import core.Shared.TopicMessage;
 
-public class Server implements IServer {
+public class Server implements IServer,IClient {
 	private static final long serialVersionUID = 1L;
 	private String privateIp;
 	private Registry registry;
 	private ConcurrentHashMap<String,IClient> connectedClients;
 	private ConcurrentHashMap<String,List<IClient>> topics;
+	
+	private String id;
+	private IServer serverToConnect;
   
 	
 	public Server() {
@@ -49,15 +52,19 @@ public class Server implements IServer {
 						System.exit(0);
 					}
 					}
+		
+		id = Integer.toString((int)(Math.random() * 1000));
+		serverToConnect=null;
 		}
   
 	
-	private static void setProperty() {
+	private static void setProperty(String ip) {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Server/");
 		if (System.getSecurityManager()==null)		System.setSecurityManager(new SecurityManager());
-		//System.setProperty("java.rmi.server.hostname",ip);
+		System.setProperty("java.rmi.server.hostname",ip);
 	}
+	
 
 	@Override
 	public synchronized void connect(String clientId, IClient stub) throws RemoteException {
@@ -153,6 +160,15 @@ public class Server implements IServer {
 		connectedClients.get(clientId).getTopicList(topics.keySet());
 	}
 
+	
+	@Override
+	public void close() throws RemoteException {
+		System.out.println("Disconnecting..");
+		for(String clientId : connectedClients.keySet())
+			disconnect(clientId);
+		serverToConnect.disconnect(id);
+	}
+	
 
 	@Override
 	public void showSubscribersOfOneTopic(String clientId, String topic) throws RemoteException {
@@ -173,25 +189,6 @@ public class Server implements IServer {
 		for(AbstractMap.Entry<String,List<IClient>> topic : topics.entrySet())
 			showSubscribersOfOneTopic(clientId,topic.getKey());
 	}
-
-	
-	
-
-
-	public static void main(String args[]) {
-		Server server = new Server();
-		System.out.println("Private ip: " + server.getPrivateIp());
-		Scanner scanner=new Scanner(System.in);
-		System.out.println("Insert the server name you want to create:");
-		setProperty();
-		try {
-			server.bindToRegistry(scanner.nextLine());
-		} catch(RemoteException e) {
-			System.out.println(e.getMessage());
-			System.exit(0);
-		}
-		scanner.close();
-	}
 	
 	
 	public void bindToRegistry(String serverName) throws RemoteException {
@@ -199,18 +196,19 @@ public class Server implements IServer {
 			registry.rebind(serverName,(IServer)UnicastRemoteObject.exportObject(this,0));
 			System.out.println("It works!\n");
 			} catch (RemoteException e) {
-			}
 		}
+	}
+
 	
 	
 	
-	
+	@Override
 	public void notifyClient(String message) throws RemoteException {
 		System.out.println(message);
-		
 	}
 	
 	
+	@Override
 	public void sendMessage(TopicMessage message) throws RemoteException {
 		System.out.println(message);
 		for(String clientId : connectedClients.keySet())
@@ -218,13 +216,138 @@ public class Server implements IServer {
 	}
 
 	
+	@Override
 	public void getTopicList(Set<String> topics) throws RemoteException {	
 		System.out.println(topics);
 	}
 	
 	
-	public String getPrivateIp() {
-	    return privateIp;
+	private void connectToServer(String serverIp, String serverName) throws Exception {
+		try {
+			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
+			} catch (NotBoundException e) {
+				throw new Exception("Server could not be found");
+			}
+		try {
+			serverToConnect.connect(this.id,(IClient)UnicastRemoteObject.toStub(this));
+			} catch (RemoteException e) {
+				throw new Exception("Server could not be connected");
+			}
 	}
+	
+	
+	
+	
+	
+
+
+	public static void main(String args[]) {
+		Server server = new Server();
+		System.out.println("Private ip: " + server.privateIp);
+		Scanner scanner=new Scanner(System.in);
+		System.out.println("Insert the server name you want to create:");
+		setProperty(server.privateIp);
+		try {
+			server.bindToRegistry(scanner.nextLine());
+		} catch(RemoteException e) {
+			System.out.println(e.getMessage());
+			System.exit(0);
+		}
+		
+		
+		System.out.println("Enter Yes if you want to become also a client:");
+		if(scanner.nextLine().equals("Yes")) {
+			System.out.println("\nServer with clientId "+server.id);
+			try {
+				System.out.println("Insert the server IP you want to connect to:");
+				String serverIp = scanner.nextLine();
+				setProperty(serverIp);
+				System.out.println("Insert the server name you want to connect to:");
+				server.connectToServer(serverIp,scanner.nextLine());
+			} catch (Exception e) {
+				System.out.println(e.getMessage());
+				scanner.close();
+				System.exit(0);
+			}
+			
+			try {
+				String choice,topic;
+		
+				while(true) {
+					menu();
+					choice=scanner.nextLine();
+					switch(choice) {
+					case("1"):
+						server.serverToConnect.showTopicList(server.id);
+						break;
+					case("2"):
+						System.out.println("Create topic");
+						server.serverToConnect.createTopic(server.id,scanner.nextLine());
+						break;
+					case("3"):
+						System.out.println("Insert topic");
+						topic=scanner.nextLine();
+						System.out.println("Insert post");
+						server.serverToConnect.publish(server.id,new TopicMessage(topic,scanner.nextLine(),server.id));
+						break;
+					case("4"):
+						System.out.println("Insert topic to subscribe");
+						topic=scanner.nextLine();
+						server.serverToConnect.subscribe(server.id,topic);
+						break;
+					case("5"):
+						System.out.println("Insert topic to unsubscribe");
+						topic=scanner.nextLine();
+						server.serverToConnect.unsubscribe(server.id,topic);
+						break;
+					case("6"):
+						System.out.println("Insert topic");
+						topic=scanner.nextLine();
+						server.serverToConnect.showSubscribersOfOneTopic(server.id,topic);
+						break;
+					case("7"):
+						server.serverToConnect.showSubscribersOfAllTopics(server.id);
+						break;
+					case("quit"):
+						server.serverToConnect.disconnect(server.id);
+						scanner.close();
+					case("close"):
+						server.close();
+						scanner.close();
+						System.exit(0);
+					default:
+						System.out.println("Invalid choice");
+						break;
+					}
+					System.out.println("\nPress enter to continue");
+					scanner.nextLine();
+					}
+				} catch (RemoteException e) {	
+					System.out.println("Server main had a problem\n");
+					System.exit(0);
+				}
+		}
+		
+		else
+			System.out.println("You've decided not to become a client\n");
+		scanner.close();
+	}
+	
+	
+	
+	
+	private static void menu() {
+		System.out.println("Press:");
+		System.out.println("1 \tGet all topics");
+		System.out.println("2 \tCreate topic");
+		System.out.println("3 \tPublish post into a topic");
+		System.out.println("4 \tSubscribe a topic");
+		System.out.println("5 \tUnsubscribe from a topic");
+		System.out.println("6 \tSee subscribers of a topic");
+		System.out.println("7 \tSee subscribers of all topics");
+		System.out.println("quit \tDisconnect from server");
+		System.out.println("close \tDisconnect server and clients\n");
+	}
+	
   
 }
