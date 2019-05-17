@@ -22,43 +22,12 @@ public class Client implements IClient {
 		serverToConnect=null;
 	}
 	
-	private static void setProperty(String ip) {
-		System.setProperty("java.security.policy","file:./sec.policy");
-		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
-		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
-		System.setProperty("java.rmi.server.hostname",ip);
-	}
 	
-	private void connectToServer(String serverIp, String serverName) throws Exception {
-		try {
-			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
-			} catch (NotBoundException e) {
-				throw new Exception("Server could not be found");
-			}
-		try {
-			serverToConnect.connect(this.id,(IClient)UnicastRemoteObject.exportObject(this,0));
-			} catch (RemoteException e) {
-				throw new Exception("Server could not be connected");
-			}
-	}
-	
-	private static void menu() {
-		System.out.println("Press:");
-		System.out.println("1 \tGet all topics");
-		System.out.println("2 \tCreate topic");
-		System.out.println("3 \tPublish post into a topic");
-		System.out.println("4 \tSubscribe a topic");
-		System.out.println("5 \tUnsubscribe from a topic");
-		System.out.println("6 \tSee subscribers of a topic");
-		System.out.println("7 \tSee subscribers of all topics");
-		System.out.println("quit \tDisconnect from server\n");
-	}
 	
 	@Override
 	public void notifyClient(String message) throws RemoteException {
 		System.out.println(message);
 	}
-
 
 	@Override
 	public void sendMessage(TopicMessage message) throws RemoteException {
@@ -69,8 +38,9 @@ public class Client implements IClient {
 	public void getTopicList(Set<String> topics) throws RemoteException {	
 		System.out.println(topics);
 	}
-
-
+	
+	
+	
 	
 	
 	public static void main(String args[]) {
@@ -88,7 +58,6 @@ public class Client implements IClient {
 			scanner.close();
 			System.exit(0);
 		}
-		
 		
 		try {
 			String choice,topic;
@@ -129,8 +98,8 @@ public class Client implements IClient {
 					client.serverToConnect.showSubscribersOfAllTopics(client.id);
 					break;
 				case("quit"):
-					client.serverToConnect.disconnect(client.id);
 					scanner.close();
+					client.serverToConnect.disconnect(client.id);
 					System.exit(0);
 				default:
 					System.out.println("Invalid choice");
@@ -140,10 +109,46 @@ public class Client implements IClient {
 				scanner.nextLine();
 				}
 			} catch (RemoteException e) {	
-				System.out.println("Client main had a problem\n");
+				System.out.println("Server could not be reached");
+				scanner.close();
 				System.exit(0);
 			}
 	}
     
+	
+	
+	private static void menu() {
+		System.out.println("Type:");
+		System.out.println("1 \tGet all topics");
+		System.out.println("2 \tCreate topic");
+		System.out.println("3 \tPublish post into a topic");
+		System.out.println("4 \tSubscribe a topic");
+		System.out.println("5 \tUnsubscribe from a topic");
+		System.out.println("6 \tSee subscribers of a topic");
+		System.out.println("7 \tSee subscribers of all topics");
+		System.out.println("quit \tDisconnect from server\n");
+	}
+	
+	
+	private static void setProperty(String ip) {
+		System.setProperty("java.security.policy","file:./sec.policy");
+		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
+		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
+		System.setProperty("java.rmi.server.hostname",ip);
+	}
+	
+	
+	private void connectToServer(String serverIp, String serverName) throws Exception {
+		try {
+			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
+			} catch (NotBoundException e) {
+				throw new Exception("Server could not be found");
+			}
+		try {
+			serverToConnect.connect(this.id,(IClient)UnicastRemoteObject.exportObject(this,0));
+			} catch (RemoteException e) {
+				throw new Exception("Server could not be connected");
+			}
+	}
 	
 }
