@@ -213,7 +213,7 @@ public class Server implements IServer,IClient {
 		}
 		
 		
-		System.out.println("Enter Yes if you want to become also a client:");
+		System.out.println("\nType Yes if you want to become also a client:");
 		if(scanner.nextLine().equals("Yes")) {
 			System.out.println("\nServer with clientId "+server.id);
 			try {
@@ -288,7 +288,7 @@ public class Server implements IServer,IClient {
 		
 		System.out.println("You've decided not to become a client\n");
 		while(true) {
-			System.out.println("\nType Disconnect to disconnect server and connected clients");
+			System.out.println("\nType Disconnect to disconnect server and connected clients:");
 			if(scanner.nextLine().equals("Disconnect")) {
 				scanner.close();
 				server.close();
