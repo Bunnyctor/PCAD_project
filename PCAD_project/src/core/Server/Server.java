@@ -88,7 +88,6 @@ public class Server implements IServer,IClient {
 			clientList.remove(client);
 		if (connectedClients.containsKey(clientId))	
 			connectedClients.remove(clientId);
-		this.serverToConnect=null;
 		System.out.println("Client "+clientId+" disconnected");
 		//UnicastRemoteObject.unexportObject(client,true);
 	}
@@ -267,6 +266,7 @@ public class Server implements IServer,IClient {
 						break;
 					case("Quit"):
 						server.serverToConnect.disconnect(server.id);
+						server.serverToConnect=null;
 						break;
 					default:
 						System.out.println("Invalid choice");
@@ -277,6 +277,7 @@ public class Server implements IServer,IClient {
 					}
 				} catch (RemoteException e) {	
 					System.out.println("Server could not be reached");
+					server.serverToConnect=null;
 					scanner.close();
 					server.close();
 				}
@@ -305,7 +306,7 @@ public class Server implements IServer,IClient {
 		System.out.println("5 \tUnsubscribe from a topic");
 		System.out.println("6 \tSee subscribers of a topic");
 		System.out.println("7 \tSee subscribers of all topics");
-		System.out.println("Quit \tDisconnect from server");
+		System.out.println("Quit \tDisconnect from server\n");
 	}
 	
 	
