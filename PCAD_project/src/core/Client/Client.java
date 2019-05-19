@@ -60,12 +60,11 @@ public class Client implements IClient {
 		}
 		
 		try {
-			String choice,topic;
+			String topic;
 	
 			while(true) {
 				menu();
-				choice=scanner.nextLine();
-				switch(choice) {
+				switch(scanner.nextLine()) {
 				case("1"):
 					client.serverToConnect.showTopicList(client.id);
 					break;
@@ -97,7 +96,7 @@ public class Client implements IClient {
 				case("7"):
 					client.serverToConnect.showSubscribersOfAllTopics(client.id);
 					break;
-				case("quit"):
+				case("Quit"):
 					scanner.close();
 					client.serverToConnect.disconnect(client.id);
 					System.exit(0);
@@ -126,14 +125,14 @@ public class Client implements IClient {
 		System.out.println("5 \tUnsubscribe from a topic");
 		System.out.println("6 \tSee subscribers of a topic");
 		System.out.println("7 \tSee subscribers of all topics");
-		System.out.println("quit \tDisconnect from server\n");
+		System.out.println("Quit \tDisconnect from server\n");
 	}
 	
 	
 	private static void setProperty(String ip) {
 		System.setProperty("java.security.policy","file:./sec.policy");
 		System.setProperty("java.rmi.server.codebase","file:${workspace_loc}/Client/");
-		if (System.getSecurityManager() == null)	System.setSecurityManager(new SecurityManager());
+		if (System.getSecurityManager()==null)	System.setSecurityManager(new SecurityManager());
 		System.setProperty("java.rmi.server.hostname",ip);
 	}
 	

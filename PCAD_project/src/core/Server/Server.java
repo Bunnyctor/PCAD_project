@@ -83,12 +83,13 @@ public class Server implements IServer,IClient {
 			throw new RemoteException("Disconnection failed, there was not a client with id "+clientId);
 		}
 		IClient client = connectedClients.get(clientId);
-		System.out.println("Client "+clientId+" disconnected");
 		client.notifyClient("Disconnecting..");
 		for(List<IClient> clientList : topics.values())
 			clientList.remove(client);
 		if (connectedClients.containsKey(clientId))	
 			connectedClients.remove(clientId);
+		this.serverToConnect=null;
+		System.out.println("Client "+clientId+" disconnected");
 		//UnicastRemoteObject.unexportObject(client,true);
 	}
   
@@ -228,12 +229,11 @@ public class Server implements IServer,IClient {
 			}
 			
 			try {
-				String choice,topic;
+				String topic;
 		
-				while(true) {
+				while(server.serverToConnect!=null) {
 					menu();
-					choice=scanner.nextLine();
-					switch(choice) {
+					switch(scanner.nextLine()) {
 					case("1"):
 						server.serverToConnect.showTopicList(server.id);
 						break;
@@ -265,12 +265,9 @@ public class Server implements IServer,IClient {
 					case("7"):
 						server.serverToConnect.showSubscribersOfAllTopics(server.id);
 						break;
-					case("quit"):
-						scanner.close();
+					case("Quit"):
 						server.serverToConnect.disconnect(server.id);
-					case("close"):
-						scanner.close();
-						server.close();
+						break;
 					default:
 						System.out.println("Invalid choice");
 						break;
@@ -285,10 +282,10 @@ public class Server implements IServer,IClient {
 				}
 		}
 		
-		System.out.println("You've decided not to become a client\n");
+		else	System.out.println("You've decided not to become a client\n");
 		while(true) {
-			System.out.println("\nType Disconnect to disconnect server and connected clients:");
-			if(scanner.nextLine().equals("Disconnect")) {
+			System.out.println("Type Quit to disconnect server:");
+			if(scanner.nextLine().equals("Quit")) {
 				scanner.close();
 				server.close();
 			} 
@@ -308,8 +305,7 @@ public class Server implements IServer,IClient {
 		System.out.println("5 \tUnsubscribe from a topic");
 		System.out.println("6 \tSee subscribers of a topic");
 		System.out.println("7 \tSee subscribers of all topics");
-		System.out.println("quit \tDisconnect from server");
-		System.out.println("close \tDisconnect server and connected clients\n");
+		System.out.println("Quit \tDisconnect from server");
 	}
 	
 	
@@ -322,15 +318,17 @@ public class Server implements IServer,IClient {
 	
 	
 	public void close() {
+		System.out.println("Quitting..");
 		for(String clientId : connectedClients.keySet())
 			try {
-				disconnect(clientId);
+				this.disconnect(clientId);
 			} catch (RemoteException e) {
 				System.out.println("Problem during client "+clientId+" disconnection");
 			}
 		if(serverToConnect!=null)
 			try {
-				serverToConnect.disconnect(id);
+				serverToConnect.disconnect(this.id);
+				this.serverToConnect=null;
 			} catch (RemoteException e) {
 				System.out.println(e.getMessage());
 			}
