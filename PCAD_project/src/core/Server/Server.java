@@ -54,8 +54,7 @@ public class Server implements IServer,IClient {
 						System.exit(0);
 					}
 					}
-		
-		id = Integer.toString((int)(Math.random() * 1000));
+		id=Integer.toString((int)(Math.random()*1000));
 		serverToConnect=null;
 	}
  
@@ -176,7 +175,7 @@ public class Server implements IServer,IClient {
 	}
 	
 	
-
+	
 	
 	@Override
 	public void notifyClient(String message) throws RemoteException {
@@ -201,7 +200,7 @@ public class Server implements IServer,IClient {
 	
 	public static void main(String args[]) {
 		Server server = new Server();
-		System.out.println("Private ip: " + server.privateIp);
+		System.out.println("Private ip: "+server.privateIp);
 		Scanner scanner=new Scanner(System.in);
 		setProperty(server.privateIp);
 		System.out.println("Insert the server name you want to create:");
@@ -323,7 +322,6 @@ public class Server implements IServer,IClient {
 	
 	
 	public void close() {
-		System.out.println("Disconnecting..");
 		for(String clientId : connectedClients.keySet())
 			try {
 				disconnect(clientId);
@@ -340,9 +338,9 @@ public class Server implements IServer,IClient {
 	}
 	
 	
-	private void connectToServer(String serverIp, String serverName) throws Exception {
+	private void connectToServer(String serverIp, String serverNameToConnect) throws Exception {
 		try {
-			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
+			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverNameToConnect);
 			} catch (NotBoundException e) {
 				throw new Exception("Server could not be found");
 			}

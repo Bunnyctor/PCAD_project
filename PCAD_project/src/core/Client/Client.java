@@ -18,7 +18,7 @@ public class Client implements IClient {
 
    
 	public Client() {
-		id = Integer.toString((int)(Math.random() * 1000));
+		id=Integer.toString((int)(Math.random()*1000));
 		serverToConnect=null;
 	}
 	
@@ -138,9 +138,9 @@ public class Client implements IClient {
 	}
 	
 	
-	private void connectToServer(String serverIp, String serverName) throws Exception {
+	private void connectToServer(String serverIp, String serverNameToConnect) throws Exception {
 		try {
-			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverName);
+			serverToConnect = (IServer)LocateRegistry.getRegistry(serverIp,8000).lookup(serverNameToConnect);
 			} catch (NotBoundException e) {
 				throw new Exception("Server could not be found");
 			}
