@@ -15,9 +15,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import core.Shared.IServer;
-import core.Shared.IClient;
-import core.Shared.TopicMessage;
+import core.Shared.*;
 
 public class Server implements IServer,IClient {
 	
@@ -29,7 +27,7 @@ public class Server implements IServer,IClient {
 	
 	private String id;
 	private IServer serverToConnect;
-  
+	
 	
 	
 	public Server() {
@@ -59,9 +57,9 @@ public class Server implements IServer,IClient {
 			serverToConnect=null;
 		}
 	}
- 
 	
-
+	
+	
 	@Override
 	public synchronized void connect(String clientId, IClient stub) throws RemoteException {
 		try {
@@ -93,8 +91,8 @@ public class Server implements IServer,IClient {
 		System.out.println("Client "+clientId+" disconnected");
 		//UnicastRemoteObject.unexportObject(client,true);
 	}
-  
-  
+	
+	
 	@Override
 	public void createTopic(String clientId, String topic) throws RemoteException {
 		if(topic.isEmpty())
@@ -106,8 +104,8 @@ public class Server implements IServer,IClient {
 		else
 			connectedClients.get(clientId).notifyClient("Topic with name "+topic+" already exists");
 	}
-
-
+	
+	
 	@Override
 	public void subscribe(String clientId, String topic) throws RemoteException {
 		List<IClient> clients = topics.get(topic);
@@ -122,8 +120,8 @@ public class Server implements IServer,IClient {
 			client.notifyClient("Topic with name "+topic+" does not exists");
 		}
 	}
-
-
+	
+	
 	@Override
 	public void unsubscribe(String clientId, String topic) throws RemoteException {
 		List<IClient> clients = topics.get(topic);
@@ -138,8 +136,8 @@ public class Server implements IServer,IClient {
 			client.notifyClient("Topic with name "+topic+" does not exists");
 		}
 	}
-
-
+	
+	
 	@Override
 	public void publish(String clientId, TopicMessage message) throws RemoteException {
 		if (topics.containsKey(message.getTopic()))
@@ -148,13 +146,13 @@ public class Server implements IServer,IClient {
 		else
 			connectedClients.get(clientId).notifyClient("Topic with name "+message.getTopic()+" does not exist");
 	}
-
-
+	
+	
 	@Override
 	public void showTopicList(String clientId) throws RemoteException {
 		connectedClients.get(clientId).getTopicList(topics.keySet());
 	}
-
+	
 	
 	@Override
 	public void showSubscribersOfOneTopic(String clientId, String topic) throws RemoteException {
@@ -207,7 +205,7 @@ public class Server implements IServer,IClient {
 		setProperty(server.privateIp);
 		System.out.println("Insert the server name you want to create:");
 		try {
-			server.bindToRegistry(scanner.nextLine());
+			server.bindInRegistry(scanner.nextLine());
 		} catch(RemoteException e) {
 			System.out.println(e.getMessage());
 			System.exit(0);
@@ -301,7 +299,9 @@ public class Server implements IServer,IClient {
 	}
 	
 	
-
+	
+	
+	
 	private static void menu() {
 		System.out.println("Type:");
 		System.out.println("1 \tGet all topics");
@@ -364,11 +364,10 @@ public class Server implements IServer,IClient {
 		} finally {
 			this.serverToConnect=null;
 		}
-
 	}
 	
 	
-	public void bindToRegistry(String serverName) throws RemoteException {
+	public void bindInRegistry(String serverName) throws RemoteException {
 		try {
 			registry.rebind(serverName,(IServer)UnicastRemoteObject.exportObject(this,0));
 			System.out.println("It works!\n");

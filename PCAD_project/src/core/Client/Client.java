@@ -5,9 +5,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
-import core.Shared.TopicMessage;
-import core.Shared.IClient;
-import core.Shared.IServer;
+import core.Shared.*;
 
 public class Client implements IClient {
    
@@ -62,7 +60,7 @@ public class Client implements IClient {
 		try {
 			String topic;
 	
-			while(true) {
+			while(client.serverToConnect!=null) {
 				menu();
 				switch(scanner.nextLine()) {
 				case("1"):
@@ -97,9 +95,15 @@ public class Client implements IClient {
 					client.serverToConnect.showSubscribersOfAllTopics(client.id);
 					break;
 				case("Quit"):
-					scanner.close();
-					client.serverToConnect.disconnect(client.id);
-					System.exit(0);
+					try {
+						client.disconnectFromServer();
+					} catch (Exception e) {
+						System.out.println(e.getMessage());
+					}
+					finally {
+						scanner.close();
+						System.exit(0);
+					}
 				default:
 					System.out.println("Invalid choice");
 					break;
@@ -114,6 +118,8 @@ public class Client implements IClient {
 			}
 	}
     
+	
+	
 	
 	
 	private static void menu() {
@@ -148,6 +154,17 @@ public class Client implements IClient {
 			} catch (RemoteException e) {
 				throw new Exception("Server could not be connected");
 			}
+	}
+	
+	
+	private void disconnectFromServer() throws Exception {
+		try {
+			this.serverToConnect.disconnect(this.id);
+		} catch (RemoteException e) {
+			throw new Exception ("Server could not be disconnected");
+		} finally {
+			this.serverToConnect=null;
+		}
 	}
 	
 }
