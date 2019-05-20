@@ -54,8 +54,10 @@ public class Server implements IServer,IClient {
 						System.exit(0);
 					}
 					}
-		id=Integer.toString((int)(Math.random()*1000));
-		serverToConnect=null;
+		finally {
+			id=Integer.toString((int)(Math.random()*1000));
+			serverToConnect=null;
+		}
 	}
  
 	
@@ -265,8 +267,11 @@ public class Server implements IServer,IClient {
 						server.serverToConnect.showSubscribersOfAllTopics(server.id);
 						break;
 					case("Quit"):
-						server.serverToConnect.disconnect(server.id);
-						server.serverToConnect=null;
+						try {
+							server.disconnectFromServer();
+						} catch (Exception e) {
+							System.out.println(e.getMessage());
+						}
 						break;
 					default:
 						System.out.println("Invalid choice");
@@ -291,7 +296,7 @@ public class Server implements IServer,IClient {
 				server.close();
 			} 
 			else
-				System.out.println("Invalid choice");
+				System.out.println("Invalid choice\n");
 		}
 	}
 	
@@ -351,11 +356,24 @@ public class Server implements IServer,IClient {
 	}
 	
 	
+	private void disconnectFromServer() throws Exception {
+		try {
+			this.serverToConnect.disconnect(this.id);
+		} catch (RemoteException e) {
+			throw new Exception ("Server could not be disconnected");
+		} finally {
+			this.serverToConnect=null;
+		}
+
+	}
+	
+	
 	public void bindToRegistry(String serverName) throws RemoteException {
 		try {
 			registry.rebind(serverName,(IServer)UnicastRemoteObject.exportObject(this,0));
 			System.out.println("It works!\n");
 			} catch (RemoteException e) {
+				throw e;
 		}
 	}
   
