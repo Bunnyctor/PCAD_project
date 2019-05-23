@@ -2,6 +2,7 @@ package core.Client;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
@@ -12,12 +13,28 @@ public class Client implements IClient {
 	private static final long serialVersionUID = 1L;
     private String id;
     private IServer serverToConnect;
+    private Registry registry;
     
 
    
 	public Client() {
-		id=Integer.toString((int)(Math.random()*1000));
-		serverToConnect=null;
+		try {
+			registry = LocateRegistry.createRegistry(8000);
+			System.out.println("Registry created");
+			} catch (RemoteException e) {
+				if (e.getMessage().contains("Port already in use"))
+					try {
+						registry = LocateRegistry.getRegistry(8000);
+						System.out.println("Registry found");
+					} catch (RemoteException e1) {
+						System.out.println("Registry could not be found or created");
+						System.exit(0);
+					}
+					}
+		finally {
+			id=Integer.toString((int)(Math.random()*1000));
+			serverToConnect=null;
+		}
 	}
 	
 	
@@ -45,6 +62,14 @@ public class Client implements IClient {
 		Client client = new Client();
 		System.out.println("ClientId "+client.id);
 		Scanner scanner=new Scanner(System.in);
+		try {
+			client.bindInRegistry(client.id);
+		} catch(RemoteException e) {
+			System.out.println(e.getMessage());
+			scanner.close();
+			System.exit(0);
+		}
+		
 		try {
 			System.out.println("Insert the server IP you want to connect to:");
 			String serverIp = scanner.nextLine();
@@ -150,7 +175,7 @@ public class Client implements IClient {
 				throw new Exception("Server could not be found");
 			}
 		try {
-			serverToConnect.connect(this.id,(IClient)UnicastRemoteObject.exportObject(this,0));
+			serverToConnect.connect(this.id,(IClient)UnicastRemoteObject.toStub(this));
 			} catch (RemoteException e) {
 				throw new Exception("Server could not be connected");
 			}
@@ -164,6 +189,15 @@ public class Client implements IClient {
 			throw new Exception ("Server could not be disconnected");
 		} finally {
 			this.serverToConnect=null;
+		}
+	}
+	
+	
+	public void bindInRegistry(String clientId) throws RemoteException {
+		try {
+			registry.rebind(clientId,(IClient)UnicastRemoteObject.exportObject(this,0));
+			} catch (RemoteException e) {
+				throw e;
 		}
 	}
 	

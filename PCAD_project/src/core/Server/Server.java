@@ -2,7 +2,6 @@ package core.Server;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -62,26 +61,20 @@ public class Server implements IServer,IClient {
 	
 	@Override
 	public synchronized void connect(String clientId, IClient stub) throws RemoteException {
-		try {
-			registry.bind(clientId,stub);
-			connectedClients.putIfAbsent(clientId,(IClient)registry.lookup(clientId));
-		} catch (AlreadyBoundException | NotBoundException e) {
-			System.out.println("Hand-shake failed with client "+clientId+", there already was a client with that id");
-			throw new RemoteException("Hand-shake failed, there already was a client with id "+clientId);
-		}
+		connectedClients.putIfAbsent(clientId,stub);
 		System.out.println("Client "+clientId+" connected");
-		stub.notifyClient("Hand-shake ok\n");
+		connectedClients.get(clientId).notifyClient("Hand-shake ok\n");
 	}
 	
 	
 	@Override
 	public synchronized void disconnect(String clientId) throws RemoteException {
-		try {
+		/*try {
 			registry.unbind(clientId);
 		} catch (NotBoundException e) {
 			System.out.println("Disconnection failed with client "+clientId+", there was not a client with that id");
 			throw new RemoteException("Disconnection failed, there was not a client with id "+clientId);
-		}
+		}*/
 		IClient client = connectedClients.get(clientId);
 		client.notifyClient("Disconnecting..");
 		for(List<IClient> clientList : topics.values())
@@ -202,15 +195,14 @@ public class Server implements IServer,IClient {
 		Server server = new Server();
 		System.out.println("Private ip: "+server.privateIp);
 		Scanner scanner=new Scanner(System.in);
-		setProperty(server.privateIp);
 		System.out.println("Insert the server name you want to create:");
 		try {
 			server.bindInRegistry(scanner.nextLine());
 		} catch(RemoteException e) {
 			System.out.println(e.getMessage());
+			scanner.close();
 			System.exit(0);
 		}
-		
 		
 		System.out.println("\nType Yes if you want to become also a client:");
 		if(scanner.nextLine().equals("Yes")) {
